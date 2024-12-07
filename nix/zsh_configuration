@@ -1,0 +1,3 @@
+alias ll="ls -la --group-directories-first"
+alias switch="darwin-rebuild switch --flake ~/.config/dotfiles/nix#m4"
+alias dot="cd ~/.config/dotfiles/nix/"

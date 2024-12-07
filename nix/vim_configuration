@@ -1,1 +1,16 @@
+inoremap jk <ESC>
+
+map yy ^y$
+let mapleader = "\<Space>"
+set backspace=indent,eol,start
+
+set laststatus=2
+set ruler
+set relativenumber
 set number
+set encoding=utf-8
+set ignorecase
+set smartcase
+set autoindent
+set clipboard=unnamed
+set foldmethod=marker

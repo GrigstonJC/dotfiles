@@ -81,15 +81,23 @@
       nixpkgs.hostPlatform = "aarch64-darwin";
 
     };
+
+
     homeconfig = { pkgs, ... }: {
       home.stateVersion = "23.05";
       programs.home-manager.enable = true;
+
+      home.file.".zshrc".source = ./zsh_configuration;
+      home.file.".vimrc".source = ./vim_configuration;
+      home.file.".config/nvim/init.vim".source = ./vim_configuration;
+
       home.packages = with pkgs; [];
 
       home.sessionVariables = {
         EDITOR = "nvim";
       };
     };
+
   in
   {
     # Build darwin flake using:
