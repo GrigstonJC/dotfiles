@@ -12,5 +12,7 @@ set encoding=utf-8
 set ignorecase
 set smartcase
 set autoindent
+set tabstop=4
+set shiftwidth=4
 set clipboard=unnamed
 set foldmethod=marker
