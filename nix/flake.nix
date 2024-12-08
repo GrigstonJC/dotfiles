@@ -19,113 +19,162 @@
 	let
 		configuration = { pkgs, config, ... }: {
 
-		services.nix-daemon.enable = true;
-		nix.settings.experimental-features = "nix-command flakes";
-		nixpkgs.config.allowUnfree = true;
+			services.nix-daemon.enable = true;
+			nix.settings.experimental-features = "nix-command flakes";
+			nixpkgs.config.allowUnfree = true;
+			nixpkgs.hostPlatform = "aarch64-darwin";
 
-		system.configurationRevision = self.rev or self.dirtyRev or null;
-		system.stateVersion = 5;
+			system.configurationRevision = self.rev or self.dirtyRev or null;
+			system.stateVersion = 5;
 
-		security.pam.enableSudoTouchIdAuth = true;
-		programs.zsh.enable = true;
-
-
-		### SYSTEM SETTINGS ###
-		system.defaults = {
-			dock.autohide = true;
-			dock.show-recents = false;
-			dock.persistent-apps = [
-				"/Applications/Bear.app"
-				"/Applications/Google Chrome.app"
-				"/Applications/Nix Apps/Alacritty.app"
-				"/System/Applications/TV.app"
-			];
-			dock.persistent-others = [
-				"/Applications"
-			];
-		};
-		system.keyboard = {
-			enableKeyMapping = true;
-			remapCapsLockToEscape = true;
-		};
+			security.pam.enableSudoTouchIdAuth = true;
 
 
-		### NIX-MANAGED PACKAGES ###
-		environment.systemPackages = [
-			pkgs.alacritty
-			pkgs.git
-			pkgs.mkalias
-			pkgs.neovim
-			pkgs.tmux
-		];
-
-
-		### FONTS ###
-		fonts.packages = [
-			pkgs.nerd-fonts.jetbrains-mono
-		];
-
-
-		### HOMEBREW-MANAGED PACKAGES ###
-		homebrew = {
-			enable = true;
-			onActivation.cleanup = "zap";
-			brews = [
-				"mas"
-			];
-			casks = [
-				"google-chrome"
-				"firefox"
-			];
-			masApps = {
-				"Bear" = 1091189122;
+			### SYSTEM SETTINGS ###
+			system.defaults = {
+				dock.autohide = true;
+				dock.show-recents = false;
+				dock.persistent-apps = [
+					"/Applications/Bear.app"
+					"/Applications/Google Chrome.app"
+					"/Applications/Nix Apps/Alacritty.app"
+					"/Applications/GIMP.app"
+					"/System/Applications/TV.app"
+					"/System/Applications/Podcasts.app"
+				];
+				dock.persistent-others = [
+					"/Applications"
+				];
+				dock.wvous-bl-corner = 4;
+				dock.wvous-tl-corner = 2;
+				dock.wvous-br-corner = 1;
+				dock.wvous-tr-corner = 4;
+				# Script below required to get trackpad settings to appy without a restart
+				# Settings may not be reflected in system settings for some reason (cache-related?)
+				trackpad.Clicking = true;
+				trackpad.Dragging = true;
+				trackpad.TrackpadRightClick = true;
+				NSGlobalDomain."com.apple.swipescrolldirection" = false;
 			};
-		};
+			system.keyboard = {
+				enableKeyMapping = true;
+				remapCapsLockToEscape = true;
+			};
 
 
-		### USERS ###
-		users.users.jeff = {
-			name = "jeff";
-			home = "/Users/jeff";
-		};
+			### NIX-MANAGED PACKAGES ###
+			environment.systemPackages = [
+				pkgs.alacritty
+				pkgs.git
+				pkgs.mkalias
+				pkgs.neovim
+				pkgs.tmux
+			];
 
 
-		### SCRIPTS ###
-
-		# Index nix-installed packages in spotlight
-		system.activationScripts.postUserActivation.text = ''
-			apps_source="${config.system.build.applications}/Applications"
-			moniker="Nix Trampolines"
-			app_target_base="$HOME/Applications"
-			app_target="$app_target_base/$moniker"
-			mkdir -p "$app_target"
-			${pkgs.rsync}/bin/rsync --archive --checksum --chmod=-w --copy-unsafe-links --delete "$apps_source/" "$app_target"
-		'';
+			### FONTS ###
+			fonts.packages = [
+				pkgs.nerd-fonts.jetbrains-mono
+			];
 
 
-		nixpkgs.hostPlatform = "aarch64-darwin";
+			### HOMEBREW-MANAGED PACKAGES ###
+			homebrew = {
+				enable = true;
+				onActivation.cleanup = "zap";
+				brews = [
+					"mas"
+				];
+				casks = [
+					#"alacritty"
+					"devtoys"
+					"discord"
+					"docker"
+					"dropbox"
+					"expressvpn"
+					"gimp"
+					"google-chrome"
+					"firefox"
+					"iterm2"
+					"libreoffice"
+					"neo4j"
+					"numi"
+					"slack"
+					"spotify"
+					"steam"
+				];
+				masApps = {
+					"Bear" = 1091189122;
+					#"Tot"
+				};
+			};
 
+
+			### USERS ###
+			users.users.jeff = {
+				name = "jeff";
+				home = "/Users/jeff";
+			};
+
+
+			### POST-ACTIVATION SCRIPT ###
+			system.activationScripts.postUserActivation.text = ''
+				# Index nix-installed packages in spotlight
+				apps_source="${config.system.build.applications}/Applications"
+				moniker="Nix Trampolines"
+				app_target_base="$HOME/Applications"
+				app_target="$app_target_base/$moniker"
+				mkdir -p "$app_target"
+				${pkgs.rsync}/bin/rsync --archive --checksum --chmod=-w --copy-unsafe-links --delete "$apps_source/" "$app_target"
+				# Avoids a logout/login cycle when applying some settings
+				/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
+			'';
 	};
-
-
-	### HOME-MANAGER-MANAGED SETTINGS ###
+				
 	homeconfig = { pkgs, ... }: {
 		home.stateVersion = "23.05";
 		programs.home-manager.enable = true;
 
 		### DOTFILES ###
-		home.file.".zshrc".source = ./zsh_configuration;
+		#home.file.".zshrc".source = ./zsh_configuration;
 		home.file.".vimrc".source = ./vim_configuration;
 		home.file.".config/nvim/init.vim".source = ./vim_configuration;
 
-		home.packages = with pkgs; [];
+		home.packages = with pkgs; [
+			git
+			oh-my-zsh
+			zsh
+			zsh-autosuggestions
+			zsh-syntax-highlighting
+			#zsh-powerlevel10k
+		];
 
-		home.sessionVariables = {
-			EDITOR = "nvim";
+		programs.zsh = {
+			enable = true;
+			initExtraFirst = ''
+				source "$HOME/.p10k.zsh"
+			'';
+			plugins = [   
+				{                                                                                   
+					name = "powerlevel10k";                                                           
+					src = pkgs.zsh-powerlevel10k;                                                     
+					file = "share/zsh-powerlevel10k/powerlevel10k.zsh-theme";                         
+				}
+			];
+			oh-my-zsh = {
+				enable = true;
+				theme = "powerlevel10k/powerlevel10k";
+				plugins = [
+					"git"
+					"zsh-autosuggestions"
+					"zsh-syntax-highlighting"
+				];
+			};
 		};
-	};
-	in
 
+	};
+
+	in
 	{
 		# Build darwin flake using: $ darwin-rebuild build --flake .#m4
 		darwinConfigurations."m4" = nix-darwin.lib.darwinSystem {
