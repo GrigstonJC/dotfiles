@@ -181,6 +181,7 @@
 					vim = "nvim";
 					desktop = "cd ~/Desktop/";
 					dot = "cd ~/.config/dotfiles/nix/";
+					proj = "cd ~/Projects/";
 					switch = "darwin-rebuild switch --flake ~/.config/dotfiles/nix#m4";
 				};
 			};
