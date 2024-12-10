@@ -34,6 +34,7 @@
 			system.defaults = {
 				dock.autohide = true;
 				controlcenter.BatteryShowPercentage = true;
+				dock.tilesize = 48;
 				dock.show-recents = false;
 				dock.persistent-apps = [
 					"/Applications/Bear.app"
