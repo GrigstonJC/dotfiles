@@ -49,7 +49,7 @@
 				dock.wvous-tl-corner = 2;
 				dock.wvous-br-corner = 1;
 				dock.wvous-tr-corner = 4;
-				# Script below required to get trackpad settings to appy without a restart
+				# postuseractivation script below required to get trackpad settings to appy without a restart
 				# Settings may not be reflected in system settings for some reason (cache-related?)
 				trackpad.Clicking = true;
 				trackpad.Dragging = true;
@@ -136,39 +136,53 @@
 		programs.home-manager.enable = true;
 
 		### DOTFILES ###
-		#home.file.".zshrc".source = ./zsh_configuration;
 		home.file.".vimrc".source = ./vim_configuration;
 		home.file.".config/nvim/init.vim".source = ./vim_configuration;
+		home.file.".p10k.zsh".source = ./p10k_configuration;
 
 		home.packages = with pkgs; [
-			git
 			oh-my-zsh
-			zsh
-			zsh-autosuggestions
-			zsh-syntax-highlighting
-			#zsh-powerlevel10k
 		];
 
-		programs.zsh = {
-			enable = true;
-			initExtraFirst = ''
-				source "$HOME/.p10k.zsh"
-			'';
-			plugins = [   
-				{                                                                                   
-					name = "powerlevel10k";                                                           
-					src = pkgs.zsh-powerlevel10k;                                                     
-					file = "share/zsh-powerlevel10k/powerlevel10k.zsh-theme";                         
-				}
-			];
-			oh-my-zsh = {
+		programs = {
+			dircolors = {
 				enable = true;
-				theme = "powerlevel10k/powerlevel10k";
-				plugins = [
-					"git"
-					"zsh-autosuggestions"
-					"zsh-syntax-highlighting"
+				enableZshIntegration = true;
+				settings = {
+					DIR = "1;34";
+					LINK = "31";
+					FIFO = "5";
+					SOCK = "5";
+					BLK = "5";
+					CHR = "5";
+					ORPHAN = "31";
+					EXEC = "32";
+				};
+			};
+			zsh = {
+				enable = true;
+				initExtra = "source ~/.p10k.zsh";
+				plugins = [   
+					{                                                                                   
+						name = "powerlevel10k";                                                           
+						src = pkgs.zsh-powerlevel10k;                                                     
+						file = "share/zsh-powerlevel10k/powerlevel10k.zsh-theme";                         
+					}
 				];
+				oh-my-zsh = {
+					enable = true;
+					plugins = [
+						"git"
+						"ssh-agent"
+					];
+				};
+				shellAliases = {
+					ll = "ls -la";
+					vim = "nvim";
+					desktop = "cd ~/Desktop/";
+					dot = "cd ~/.config/dotfiles/nix/";
+					switch = "darwin-rebuild switch --flake ~/.config/dotfiles/nix#m4";
+				};
 			};
 		};
 
