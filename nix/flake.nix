@@ -37,10 +37,14 @@
 				dock.persistent-apps = [
 					"/Applications/Bear.app"
 					"/Applications/Google Chrome.app"
-					"/Applications/Nix Apps/Alacritty.app"
+					"/Applications/Slack.app"
+					"/Applications/iTerm.app"
 					"/Applications/GIMP.app"
-					"/System/Applications/TV.app"
+					"/Applications/Neo4j Desktop.app"
+					"/Applications/Discord.app"
 					"/System/Applications/Podcasts.app"
+					"/Applications/Spotify.app"
+					"/System/Applications/TV.app"
 				];
 				dock.persistent-others = [
 					"/Applications"
