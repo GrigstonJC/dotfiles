@@ -33,6 +33,7 @@
 			### SYSTEM SETTINGS ###
 			system.defaults = {
 				dock.autohide = true;
+				controlcenter.BatteryShowPercentage = true;
 				dock.show-recents = false;
 				dock.persistent-apps = [
 					"/Applications/Bear.app"
