@@ -226,7 +226,8 @@
 					];
 				};
 				shellAliases = {
-					ll = "ls -la";
+					ls = "gls --color=tty";
+					ll = "gls -la --group-directories-first --color=tty";
 					vim = "nvim";
 					desktop = "cd ~/Desktop/";
 					dot = "cd ~/.config/dotfiles/nix/";
