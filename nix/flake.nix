@@ -69,12 +69,18 @@
 
 
 			### NIX-MANAGED PACKAGES ###
-			environment.systemPackages = [
-				pkgs.alacritty
-				pkgs.git
-				pkgs.mkalias
-				pkgs.neovim
-				pkgs.tmux
+			environment.systemPackages = with pkgs; [
+				alacritty
+				git
+				mkalias
+				neovim
+				python312 # This needs to be listed first to set the default Python version
+				python312Packages.pip
+				python312Packages.virtualenv
+				python310
+				python311
+				tmate
+				tmux
 			];
 
 
@@ -112,7 +118,6 @@
 					"make"
 					"mas"
 					"nano"
-					"pyenv"
 					"ripgrep"
 					"screen"
 					"the_silver_searcher"
@@ -140,6 +145,7 @@
 					"spotify"
 					"steam"
 				];
+				taps = [];
 				masApps = {
 					"Bear" = 1091189122;
 					#"Tot"
@@ -177,9 +183,7 @@
 		home.file.".config/nvim/init.vim".source = ./vim_configuration;
 		home.file.".p10k.zsh".source = ./p10k_configuration;
 
-		home.packages = with pkgs; [
-			oh-my-zsh
-		];
+		home.packages = with pkgs; [];
 
 		programs = {
 			dircolors = {
@@ -234,6 +238,11 @@
 					desktop = "cd ~/Desktop/";
 					dot = "cd ~/.config/dotfiles/nix/";
 					proj = "cd ~/Projects/";
+					pip = "pip3";
+					python = "python3";
+					python310 = "${pkgs.python310}/bin/python3";
+					python311 = "${pkgs.python311}/bin/python3";
+					python312 = "${pkgs.python312}/bin/python3";
 					switch = "darwin-rebuild switch --flake ~/.config/dotfiles/nix#m4";
 				};
 			};
