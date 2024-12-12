@@ -72,6 +72,7 @@
 			environment.systemPackages = with pkgs; [
 				alacritty
 				git
+				gnupg
 				mkalias
 				neovim
 				python312 # This needs to be listed first to set the default Python version
@@ -79,6 +80,7 @@
 				python312Packages.virtualenv
 				python310
 				python311
+				stow
 				tmate
 				tmux
 			];
