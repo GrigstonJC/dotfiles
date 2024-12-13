@@ -69,21 +69,26 @@
 
 
 			### NIX-MANAGED PACKAGES ###
-			environment.systemPackages = with pkgs; [
-				alacritty
-				git
-				gnupg
-				mkalias
-				neovim
-				python312 # This needs to be listed first to set the default Python version
-				python312Packages.pip
-				python312Packages.virtualenv
-				python310
-				python311
-				stow
-				tmate
-				tmux
-			];
+            environment.systemPackages = with pkgs; [
+                alacritty
+                awscli2
+                git
+                gnupg
+                google-cloud-sdk
+                htop
+                mkalias
+                neovim
+                python312    # This needs to be listed first to set the default Python version
+                python312Packages.pip
+                python312Packages.virtualenv
+                python310
+                python311
+                ripgrep
+                silver-searcher
+                stow
+                tmate
+                tmux
+            ];
 
 
 			### FONTS ###
@@ -97,8 +102,8 @@
 				enable = true;
 				onActivation.cleanup = "zap";
 				brews = [
+                    # Install GNU-flavored commands
 					"autoconf"
-					"awscli"
 					"bash"
 					"binutils"
 					"coreutils"
@@ -114,22 +119,20 @@
 					"gpatch"
 					"grep"
 					"gzip"
-					"htop"
 					"less"
 					"m4"
 					"make"
-					"mas"
 					"nano"
-					"ripgrep"
 					"screen"
-					"the_silver_searcher"
 					"watch"
 					"wdiff"
 					"wget"
 					"zip"
+
+                    # Others
+                    "mas"
 				];
 				casks = [
-					#"alacritty"
 					"devtoys"
 					"discord"
 					"docker"
