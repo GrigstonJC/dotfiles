@@ -153,7 +153,7 @@
 				taps = [];
 				masApps = {
 					"Bear" = 1091189122;
-					#"Tot"
+                    # Tot (1498235191) must be installed manually through Mac App Store because it's an iOS app
 				};
 			};
 
