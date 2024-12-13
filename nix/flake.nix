@@ -181,11 +181,28 @@
 		programs.home-manager.enable = true;
 
 		### DOTFILES ###
-		home.file.".vimrc".source = ./vim_configuration;
-		home.file.".config/nvim/init.vim".source = ./vim_configuration;
+		#home.file.".vimrc".source = ./vim_configuration;
+		#home.file.".config/nvim/init.vim".source = ./vim_configuration;
 		home.file.".p10k.zsh".source = ./p10k_configuration;
 
-		home.packages = with pkgs; [];
+		home.packages = with pkgs; [
+			# Python tooling
+			pyright
+
+			# Shell script tooling
+			shellcheck
+			shfmt
+			nodePackages.bash-language-server
+
+            # Mason dependencies
+            nodejs   # Required for many language servers
+            git      # Required for downloading packages
+            unzip    # Required for extracting packages
+            gnumake  # Required for building some packages
+
+			# ZSH language server
+			zk
+		];
 
 		programs = {
 			dircolors = {
@@ -201,6 +218,258 @@
 					ORPHAN = "31";
 					EXEC = "32";
 				};
+			};
+			neovim = {
+				enable = true;
+    			viAlias = true;
+    			vimAlias = true;
+
+    			plugins = with pkgs.vimPlugins; [
+					# LSP Support
+					nvim-lspconfig
+					mason-nvim
+					mason-lspconfig-nvim
+
+					# Autocompletion
+					nvim-cmp
+					cmp-nvim-lsp
+					cmp-buffer
+					cmp-path
+					cmp-cmdline
+					cmp-vsnip
+					vim-vsnip
+
+					# Python-specific plugins
+					vim-python-pep8-indent
+					python-syntax
+	
+					# File navigation and search
+					telescope-nvim
+					plenary-nvim
+					nvim-tree-lua
+
+					# Status line
+					lualine-nvim
+
+					# Git integration
+					vim-fugitive
+					gitsigns-nvim
+
+					# Theme
+					tokyonight-nvim
+
+					# Treesitter
+      				(nvim-treesitter.withPlugins (plugins: with plugins; [
+						tree-sitter-python
+						tree-sitter-lua
+						tree-sitter-vim
+						tree-sitter-markdown
+						tree-sitter-bash
+						#tree-sitter-zsh
+					]))
+
+					# Folding
+					nvim-ufo
+					promise-async
+
+					# Shell script support
+					ale
+				];
+				extraConfig = ''
+					set number
+					set relativenumber
+					set expandtab
+					set tabstop=4
+					set softtabstop=4
+					set shiftwidth=4
+                    set encoding=utf-8
+                    set ignorecase
+                    set smartcase
+					set autoindent
+                    set clipboard=unnamed
+
+                    inoremap jk <ESC>
+                    map yy ^y$
+
+                    " Set leader key to space
+                    let mapleader=" "
+                    set timeoutlen=500
+
+					" Enable Python syntax highlighting
+					let g:python_highlight_all = 1
+
+					" Set colorscheme
+					colorscheme tokyonight
+
+					" Folding settings
+					set foldmethod=expr
+					set foldexpr=nvim_treesitter#foldexpr()
+					set nofoldenable
+					set foldlevel=99
+					set foldcolumn=1
+
+					" Only fold outer classes by default in Python
+					let g:python_fold_class = 1
+					let g:python_fold_function = 0
+
+					" Customize fold text
+					set fillchars=fold:·
+
+					" Shell script specific settings
+					autocmd FileType sh,bash,zsh setlocal
+						\ tabstop=2
+						\ softtabstop=2
+						\ shiftwidth=2
+						\ expandtab
+						\ autoindent
+
+					" ALE configuration for shell scripts
+					let g:ale_fixers = {
+						\ 'sh': ['shfmt'],
+						\ 'bash': ['shfmt'],
+						\ 'zsh': ['shfmt'],
+						\}
+					let g:ale_linters = {
+						\ 'sh': ['shellcheck'],
+						\ 'bash': ['shellcheck'],
+						\ 'zsh': ['shellcheck'],
+						\}
+					let g:ale_fix_on_save = 1
+					let g:ale_sh_shellcheck_options = '--external-sources'
+					let g:ale_sh_shfmt_options = '-i 2 -ci'
+				'';
+
+				extraLuaConfig = ''
+					-- LSP Configuration
+					require('mason').setup()
+					require('mason-lspconfig').setup({
+                        automatic_installation = false
+					})
+
+					local lspconfig = require('lspconfig')
+
+					-- Python LSP setup
+					lspconfig.pyright.setup{}
+
+					-- Bash/ZSH LSP setup
+					lspconfig.bashls.setup{
+						filetypes = { "sh", "bash", "zsh" },
+						settings = {
+							bashIde = {
+								globPattern = "*@(.sh|.inc|.bash|.command|.zsh)"
+							}
+						}
+					}
+
+					-- Autocompletion setup
+					local cmp = require('cmp')
+					cmp.setup({
+						snippet = {
+							expand = function(args)
+							vim.fn["vsnip#anonymous"](args.body)
+							end,
+						},
+						mapping = cmp.mapping.preset.insert({
+							['<C-d>'] = cmp.mapping.scroll_docs(-4),
+							['<C-f>'] = cmp.mapping.scroll_docs(4),
+							['<C-Space>'] = cmp.mapping.complete(),
+							['<CR>'] = cmp.mapping.confirm({ select = true }),
+						}),
+						sources = cmp.config.sources({
+							{ name = 'nvim_lsp' },
+							{ name = 'vsnip' },
+							{ name = 'buffer' },
+							{ name = 'path' },
+						})
+					})
+
+					-- Telescope setup
+					local telescope = require('telescope')
+                    telescope.setup{
+                        defaults = {
+                            mappings = {
+                                i = {
+                                    ["<C-j>"] = "move_selection_next",
+                                    ["<C-k>"] = "move_selection_previous",
+                                    ["<C-n>"] = "move_selection_next",
+                                    ["<C-p>"] = "move_selection_previous",
+                                },
+                            },
+                        },
+                    }
+
+					-- File tree setup
+					require('nvim-tree').setup{}
+
+					-- TreeSitter configuration
+					require('nvim-treesitter.configs').setup {
+						highlight = { enable = true },
+						indent = { enable = true },
+						fold = { enable = true },
+					}
+
+                    -- UFO folding setup
+                    require('ufo').setup({
+                        provider_selector = function()
+                            return {'treesitter', 'indent'}
+                        end,
+                        preview = {
+                            win_config = {
+                                border = {"", "─", "", "", "", "─", "", ""},
+                                winblend = 0,
+                                winhighlight = 'Normal:Folded',
+                                maxheight = 20  -- Maximum preview window height
+                            },
+                            mappings = {
+                                scrollB = '<C-b>',
+                                scrollF = '<C-f>',
+                                scrollU = '<C-u>',
+                                scrollD = '<C-d>',
+                                closePreview = 'K',
+                            }
+                        }
+                    })
+
+                    -- Peek keymap
+                    vim.keymap.set('n', 'K', function()
+                        local winid = require('ufo').peekFoldedLinesUnderCursor()
+                            if not winid then
+                                vim.lsp.buf.hover()
+                            end
+                        end)
+
+					-- Keymaps
+					local opts = { noremap = true, silent = true }
+					vim.keymap.set('n', '<space>e', vim.diagnostic.open_float, opts)
+					vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, opts)
+					vim.keymap.set('n', ']d', vim.diagnostic.goto_next, opts)
+					vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist, opts)
+
+					-- LSP keymaps
+					vim.api.nvim_create_autocmd('LspAttach', {
+						group = vim.api.nvim_create_augroup('UserLspConfig', {}),
+						callback = function(ev)
+						local bufopts = { noremap=true, silent=true, buffer=ev.buf }
+						vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
+						vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts)
+						vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
+						vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
+						vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, bufopts)
+						vim.keymap.set('n', '<space>ca', vim.lsp.buf.code_action, bufopts)
+						vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
+						end,
+					})
+
+					-- Custom file tree keymaps
+					vim.keymap.set('n', '<C-n>', ':NvimTreeToggle<CR>', opts)
+
+					-- Telescope keymaps
+					local builtin = require('telescope.builtin')
+					vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
+					vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
+					vim.keymap.set('n', '<leader>fb', builtin.buffers, {})
+					vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
+				'';
 			};
 			zsh = {
 				enable = true;
@@ -234,17 +503,24 @@
 					];
 				};
 				shellAliases = {
+					# Make `ls` pretty
 					ls = "gls --color=tty";
 					ll = "gls -la --group-directories-first --color=tty";
-					vim = "nvim";
+
+					#vim = "nvim";
+
 					desktop = "cd ~/Desktop/";
 					dot = "cd ~/.config/dotfiles/nix/";
 					proj = "cd ~/Projects/";
+
+					# Python versions
 					pip = "pip3";
 					python = "python3";
 					python310 = "${pkgs.python310}/bin/python3";
 					python311 = "${pkgs.python311}/bin/python3";
 					python312 = "${pkgs.python312}/bin/python3";
+
+					# Nix rebuild
 					switch = "darwin-rebuild switch --flake ~/.config/dotfiles/nix#m4";
 				};
 			};
