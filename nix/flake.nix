@@ -67,6 +67,11 @@
 				remapCapsLockToEscape = true;
 			};
 
+            services.aerospace = {
+                enable = true;
+                settings = pkgs.lib.importTOML ./aerospace-config.toml;
+            };
+
 
 			### NIX-MANAGED PACKAGES ###
             environment.systemPackages = with pkgs; [
@@ -88,6 +93,7 @@
                 stow
                 tmate
                 tmux
+                xclip
             ];
 
 
@@ -474,6 +480,14 @@
 					vim.keymap.set('n', '<leader>fh', builtin.help_tags, {})
 				'';
 			};
+            tmux = {
+                enable = true;
+                prefix = "C-b";
+                extraConfig = ''
+                    set-option -g prefix2 M-o
+                    bind-key M-o send-prefix -2
+                '';
+            };
 			zsh = {
 				enable = true;
 				initExtra = ''
@@ -487,6 +501,9 @@
 						for mandir in "''${BREW_PREFIX}/opt/"*"/libexec/gnuman"; do export MANPATH=$mandir:$MANPATH; done
 						for mandir in "''${BREW_PREFIX}/opt/"*"/share/man/man1"; do export MANPATH=$mandir:$MANPATH; done
 					fi
+
+                    # Use the right tmux config
+                    export TMUX_CONFIG_DIR="$HOME/.config/tmux"
 
 					# Use powerlevel10k theme
 					source ~/.p10k.zsh
