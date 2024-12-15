@@ -67,9 +67,15 @@
 				remapCapsLockToEscape = true;
 			};
 
-            services.aerospace = {
-                enable = true;
-                settings = pkgs.lib.importTOML ./aerospace-config.toml;
+
+            services = {
+                aerospace = {
+                    enable = true;
+                    settings = pkgs.lib.importTOML ./aerospace-config.toml;
+                };
+                jankyborders = {
+                    enable = true;
+                };
             };
 
 
