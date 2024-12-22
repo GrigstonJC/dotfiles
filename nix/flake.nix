@@ -143,6 +143,7 @@
 
                     # Others
                     "mas"
+                    "nvtop"
 				];
 				casks = [
 					"devtoys"
