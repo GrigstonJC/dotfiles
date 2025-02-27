@@ -19,16 +19,12 @@
 	let
 		configuration = { pkgs, config, ... }: {
 
-			services.nix-daemon.enable = true;
 			nix.settings.experimental-features = "nix-command flakes";
 			nixpkgs.config.allowUnfree = true;
 			nixpkgs.hostPlatform = "aarch64-darwin";
 
 			system.configurationRevision = self.rev or self.dirtyRev or null;
 			system.stateVersion = 5;
-
-			security.pam.enableSudoTouchIdAuth = true;
-
 
 			### SYSTEM SETTINGS ###
 			system.defaults = {
