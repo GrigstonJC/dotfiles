@@ -75,7 +75,7 @@
             };
 
 
-			### NIX-MANAGED PACKAGES ###
+            ### NIX-MANAGED PACKAGES ###
             environment.systemPackages = with pkgs; [
                 alacritty
                 awscli2
@@ -99,79 +99,80 @@
             ];
 
 
-			### FONTS ###
-			fonts.packages = [
-				pkgs.nerd-fonts.jetbrains-mono
-			];
+            ### FONTS ###
+            fonts.packages = [
+                pkgs.nerd-fonts.jetbrains-mono
+            ];
 
 
-			### HOMEBREW-MANAGED PACKAGES ###
-			homebrew = {
-				enable = true;
-				onActivation.cleanup = "zap";
-				brews = [
+            ### HOMEBREW-MANAGED PACKAGES ###
+            homebrew = {
+                enable = true;
+                onActivation.cleanup = "zap";
+                brews = [
                     # Install GNU-flavored commands
-					"autoconf"
-					"bash"
-					"binutils"
-					"coreutils"
-					"diffutils"
-					"ed"
-					"findutils"
-					"flex"
-					"gawk"
-					"gnu-indent"
-					"gnu-sed"
-					"gnu-tar"
-					"gnu-which"
-					"gpatch"
-					"grep"
-					"gzip"
-					"less"
-					"m4"
-					"make"
-					"nano"
-					"screen"
-					"watch"
-					"wdiff"
-					"wget"
-					"zip"
+                    "autoconf"
+                    "bash"
+                    "binutils"
+                    "coreutils"
+                    "diffutils"
+                    "ed"
+                    "findutils"
+                    "flex"
+                    "gawk"
+                    "gnu-indent"
+                    "gnu-sed"
+                    "gnu-tar"
+                    "gnu-which"
+                    "gpatch"
+                    "grep"
+                    "gzip"
+                    "less"
+                    "m4"
+                    "make"
+                    "nano"
+                    "screen"
+                    "watch"
+                    "wdiff"
+                    "wget"
+                    "zip"
 
                     # Others
                     "mas"
                     "nvtop"
-				];
-				casks = [
-					"devtoys"
-					"discord"
-					"docker"
-					"dropbox"
-					"expressvpn"
-					"gimp"
-					"google-chrome"
-					"google-cloud-sdk"
-					"firefox"
-					"iterm2"
-					"libreoffice"
-					"neo4j"
-					"numi"
-					"slack"
-					"spotify"
-					"steam"
-				];
-				taps = [];
-				masApps = {
-					"Bear" = 1091189122;
+                ];
+                casks = [
+                    "devtoys"
+                    "discord"
+                    "docker"
+                    "dropbox"
+                    "element"
+                    "expressvpn"
+                    "gimp"
+                    "google-chrome"
+                    "google-cloud-sdk"
+                    "firefox"
+                    "iterm2"
+                    "libreoffice"
+                    "neo4j"
+                    "numi"
+                    "slack"
+                    "spotify"
+                    "steam"
+                ];
+                taps = [];
+                masApps = {
+                    "Bear" = 1091189122;
                     # Tot (1498235191) must be installed manually through Mac App Store because it's an iOS app
-				};
-			};
+                };
+            };
 
 
-			### USERS ###
-			users.users.jeff = {
-				name = "jeff";
-				home = "/Users/jeff";
-			};
+            ### USERS ###
+            users.users.jeff = {
+                name = "jeff";
+                home = "/Users/jeff";
+            };
 
 
 			### POST-ACTIVATION SCRIPT ###
