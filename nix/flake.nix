@@ -27,6 +27,7 @@
 			system.stateVersion = 5;
 
 			### SYSTEM SETTINGS ###
+            system.primaryUser = "jeff";
 			system.defaults = {
 				dock.autohide = true;
 				controlcenter.BatteryShowPercentage = true;
@@ -51,7 +52,7 @@
 				dock.wvous-tl-corner = 2;
 				dock.wvous-br-corner = 1;
 				dock.wvous-tr-corner = 4;
-				# postuseractivation script below required to get trackpad settings to appy without a restart
+				# nixApplications script below required to get trackpad settings to appy without a restart
 				# Settings may not be reflected in system settings for some reason (cache-related?)
 				trackpad.Clicking = true;
 				trackpad.Dragging = true;
@@ -176,17 +177,19 @@
 
 
 			### POST-ACTIVATION SCRIPT ###
-			system.activationScripts.postUserActivation.text = ''
-				# Index nix-installed packages in spotlight
-				apps_source="${config.system.build.applications}/Applications"
-				moniker="Nix Trampolines"
-				app_target_base="$HOME/Applications"
-				app_target="$app_target_base/$moniker"
-				mkdir -p "$app_target"
-				${pkgs.rsync}/bin/rsync --archive --checksum --chmod=-w --copy-unsafe-links --delete "$apps_source/" "$app_target"
-				# Avoids a logout/login cycle when applying some settings
-				/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
-			'';
+			system.activationScripts.nixApplications = {
+                text = ''
+                    # Index nix-installed packages in spotlight
+                    apps_source="${config.system.build.applications}/Applications"
+                    moniker="Nix Trampolines"
+                    app_target_base="/Users/${config.system.primaryUser}/Applications"
+                    app_target="$app_target_base/$moniker"
+                    sudo -u ${config.system.primaryUser} mkdir -p "$app_target"
+                    ${pkgs.rsync}/bin/rsync --archive --checksum --chmod=-w --copy-unsafe-links --delete "$apps_source/" "$app_target"
+                    # Avoids a logout/login cycle when applying some settings
+                    /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
+                '';
+            };
 	};
 				
 	homeconfig = { pkgs, ... }: {
@@ -546,6 +549,9 @@
 
 					# Nix rebuild
 					switch = "darwin-rebuild switch --flake ~/.config/dotfiles/nix#m4";
+
+                    # Nix update
+                    nix-update = "nix flake update";
 				};
 			};
 		};
