@@ -548,7 +548,7 @@
 					python312 = "${pkgs.python312}/bin/python3";
 
 					# Nix rebuild
-					switch = "darwin-rebuild switch --flake ~/.config/dotfiles/nix#m4";
+					nix-switch = "sudo darwin-rebuild switch --flake ~/.config/dotfiles/nix#m4";
 
                     # Nix update
                     nix-update = "nix flake update";
