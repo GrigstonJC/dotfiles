@@ -512,6 +512,21 @@
                     # Use the right tmux config
                     export TMUX_CONFIG_DIR="$HOME/.config/tmux"
 
+                    # Poetry setup
+                    export PATH="$HOME/.local/bin:$PATH"
+
+                    # Install Poetry if not present
+                    if ! command -v poetry &> /dev/null; then
+                        echo "Installing Poetry..."
+                        curl -sSL https://install.python-poetry.org | python3 -
+                    fi
+
+                    # Configure Poetry
+                    if command -v poetry &> /dev/null; then
+                        poetry config virtualenvs.create true
+                        poetry config virtualenvs.in-project true
+                    fi
+
 					# Use powerlevel10k theme
 					source ~/.p10k.zsh
 				'';
