@@ -96,6 +96,7 @@
                 stow
                 tmate
                 tmux
+                uv
                 xclip
             ];
 
