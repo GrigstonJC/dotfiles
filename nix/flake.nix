@@ -152,7 +152,6 @@
                     "expressvpn"
                     "gimp"
                     "google-chrome"
-                    "google-cloud-sdk"
                     "firefox"
                     "iterm2"
                     "libreoffice"
