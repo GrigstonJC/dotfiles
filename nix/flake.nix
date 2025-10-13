@@ -110,7 +110,7 @@
             ### HOMEBREW-MANAGED PACKAGES ###
             homebrew = {
                 enable = true;
-                onActivation.cleanup = "uninstall";
+                onActivation.cleanup = "zap";
                 brews = [
                     # Install GNU-flavored commands
                     "autoconf"
