@@ -110,7 +110,7 @@
             ### HOMEBREW-MANAGED PACKAGES ###
             homebrew = {
                 enable = true;
-                onActivation.cleanup = "zap";
+                onActivation.cleanup = "uninstall";
                 brews = [
                     # Install GNU-flavored commands
                     "autoconf"
@@ -363,13 +363,13 @@
                         automatic_installation = false
 					})
 
-					local lspconfig = require('lspconfig')
 
 					-- Python LSP setup
-					lspconfig.pyright.setup{}
+                    vim.lsp.config.pyright = {}
+                    vim.lsp.enable('pyright')
 
 					-- Bash/ZSH LSP setup
-					lspconfig.bashls.setup{
+                    vim.lsp.config.bashls = {
 						filetypes = { "sh", "bash", "zsh" },
 						settings = {
 							bashIde = {
@@ -377,6 +377,7 @@
 							}
 						}
 					}
+                    vim.lsp.enable('bashls')
 
 					-- Autocompletion setup
 					local cmp = require('cmp')
@@ -498,7 +499,7 @@
             };
 			zsh = {
 				enable = true;
-				initExtra = ''
+				initContent = pkgs.lib.mkBefore ''
 					# Use gnu versions of shell commands
 					BREW_BIN="/usr/local/bin/brew"
 					if [ -f "/opt/homebrew/bin/brew" ]; then BREW_BIN="/opt/homebrew/bin/brew" fi
