@@ -39,7 +39,6 @@
 					"/Applications/Slack.app"
 					"/Applications/iTerm.app"
 					"/Applications/GIMP.app"
-					"/Applications/Neo4j Desktop.app"
 					"/Applications/Discord.app"
 					"/System/Applications/Podcasts.app"
 					"/Applications/Spotify.app"
