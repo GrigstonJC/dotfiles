@@ -144,6 +144,7 @@
                     "nvtop"
                 ];
                 casks = [
+                    "aldente"
                     "betterdisplay"
                     "devtoys"
                     "discord"
