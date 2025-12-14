@@ -85,11 +85,12 @@
                 htop
                 mkalias
                 neovim
-                python312    # This needs to be listed first to set the default Python version
-                python312Packages.pip
-                python312Packages.virtualenv
+                python313    # This needs to be listed first to set the default Python version
+                python313Packages.pip
+                python313Packages.virtualenv
                 python310
                 python311
+                python312
                 ripgrep
                 silver-searcher
                 stow
@@ -562,6 +563,7 @@
 					python310 = "${pkgs.python310}/bin/python3";
 					python311 = "${pkgs.python311}/bin/python3";
 					python312 = "${pkgs.python312}/bin/python3";
+                    python313 = "${pkgs.python313}/bin/python3";
 
 					# Nix rebuild
 					nix-switch = "sudo darwin-rebuild switch --flake ~/.config/dotfiles/nix#m4";
