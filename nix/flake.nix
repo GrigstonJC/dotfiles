@@ -346,11 +346,13 @@
 						\ 'sh': ['shfmt'],
 						\ 'bash': ['shfmt'],
 						\ 'zsh': ['shfmt'],
+                        \ 'python': [],
 						\}
 					let g:ale_linters = {
 						\ 'sh': ['shellcheck'],
 						\ 'bash': ['shellcheck'],
 						\ 'zsh': ['shellcheck'],
+                        \ 'python': [],
 						\}
 					let g:ale_fix_on_save = 1
 					let g:ale_sh_shellcheck_options = '--external-sources'
