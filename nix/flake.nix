@@ -202,6 +202,11 @@
 		#home.file.".vimrc".source = ./vim_configuration;
 		#home.file.".config/nvim/init.vim".source = ./vim_configuration;
 		home.file.".p10k.zsh".source = ./p10k_configuration;
+        ### LAZYVIM CONFIG ###
+		home.file.".config/lazyvim/init.lua".source = ./lazyvim/init.lua;
+		home.file.".config/lazyvim/lua/config/keymaps.lua".source = ./lazyvim/lua/config/keymaps.lua;
+		home.file.".config/lazyvim/lua/config/options.lua".source = ./lazyvim/lua/config/options.lua;
+		home.file.".config/lazyvim/lua/plugins/custom.lua".source = ./lazyvim/lua/plugins/custom.lua;
 
 		home.packages = with pkgs; [
 			# Python tooling
@@ -410,8 +415,8 @@
 
                     -- UFO folding setup
                     vim.o.foldcolumn = '1'
-                    vim.o.foldlevel = 0
-                    vim.o.foldlevelstart = 0
+                    vim.o.foldlevel = 99
+                    vim.o.foldlevelstart = 99
                     vim.o.foldenable = true
 
                     require('ufo').setup({
@@ -539,6 +544,7 @@
 					ll = "gls -la --group-directories-first --color=tty";
 
 					#vim = "nvim";
+                    lvim = "NVIM_APPNAME=lazyvim nvim";
 
 					desktop = "cd ~/Desktop/";
 					dot = "cd ~/.config/dotfiles/nix/";
