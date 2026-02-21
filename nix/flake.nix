@@ -85,6 +85,7 @@
                 htop
                 mkalias
                 neovim
+                opencode
                 python313    # This needs to be listed first to set the default Python version
                 python313Packages.pip
                 python313Packages.virtualenv
