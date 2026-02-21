@@ -88,7 +88,6 @@
                 python313    # This needs to be listed first to set the default Python version
                 python313Packages.pip
                 python313Packages.virtualenv
-                python310
                 python311
                 python312
                 ripgrep
@@ -111,6 +110,7 @@
             homebrew = {
                 enable = true;
                 onActivation.cleanup = "zap";
+                onActivation.upgrade = true;
                 brews = [
                     # Install GNU-flavored commands
                     "autoconf"
@@ -148,7 +148,7 @@
                     "betterdisplay"
                     "devtoys"
                     "discord"
-                    "docker"
+                    "docker-desktop"
                     "dropbox"
                     "element"
                     "expressvpn"
@@ -359,7 +359,7 @@
 					let g:ale_sh_shfmt_options = '-i 2 -ci'
 				'';
 
-				extraLuaConfig = ''
+				initLua = ''
 					-- LSP Configuration
 					require('mason').setup()
 					require('mason-lspconfig').setup({
@@ -421,13 +421,6 @@
 
 					-- File tree setup
 					require('nvim-tree').setup{}
-
-					-- TreeSitter configuration
-					require('nvim-treesitter.configs').setup {
-						highlight = { enable = true },
-						indent = { enable = true },
-						fold = { enable = true },
-					}
 
                     -- UFO folding setup
                     require('ufo').setup({
@@ -563,7 +556,6 @@
 					# Python versions
 					pip = "pip3";
 					python = "python3";
-					python310 = "${pkgs.python310}/bin/python3";
 					python311 = "${pkgs.python311}/bin/python3";
 					python312 = "${pkgs.python312}/bin/python3";
                     python313 = "${pkgs.python313}/bin/python3";
