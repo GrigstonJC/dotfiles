@@ -319,20 +319,6 @@
 					" Set colorscheme
 					colorscheme tokyonight
 
-					" Folding settings
-					set foldmethod=expr
-					set foldexpr=nvim_treesitter#foldexpr()
-					set nofoldenable
-					set foldlevel=99
-					set foldcolumn=1
-
-					" Only fold outer classes by default in Python
-					let g:python_fold_class = 1
-					let g:python_fold_function = 0
-
-					" Customize fold text
-					set fillchars=fold:·
-
 					" Shell script specific settings
 					autocmd FileType sh,bash,zsh setlocal
 						\ tabstop=2
@@ -423,6 +409,11 @@
 					require('nvim-tree').setup{}
 
                     -- UFO folding setup
+                    vim.o.foldcolumn = '1'
+                    vim.o.foldlevel = 0
+                    vim.o.foldlevelstart = 0
+                    vim.o.foldenable = true
+
                     require('ufo').setup({
                         provider_selector = function()
                             return {'treesitter', 'indent'}
