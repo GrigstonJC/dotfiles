@@ -6,15 +6,20 @@ vim.opt.clipboard = "unnamed"
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.autoindent = true
+vim.opt.timeoutlen = 300
+vim.opt.ttimeoutlen = 10
 vim.opt.number = true
 vim.opt.relativenumber = true
 
+-- Ensure LazyVim doesn't override
+vim.g.lazyvim_options_set = true
+
 -- Shell file specific settings
 vim.api.nvim_create_autocmd("FileType", {
-    pattern = { "sh", "bash", "zsh" },
-    callback = function()
-        vim.opt_local.tabstop = 2
-        vim.opt_local.softtabstop = 2
-        vim.opt_local.shiftwidth = 2
-    end,
+	pattern = { "sh", "bash", "zsh" },
+	callback = function()
+		vim.opt_local.tabstop = 2
+		vim.opt_local.softtabstop = 2
+		vim.opt_local.shiftwidth = 2
+	end,
 })
