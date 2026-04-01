@@ -216,7 +216,7 @@
 			# Shell script tooling
 			shellcheck
 			shfmt
-			nodePackages.bash-language-server
+			bash-language-server
 
             # Mason dependencies
             nodejs   # Required for many language servers
