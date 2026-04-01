@@ -85,6 +85,7 @@
                 htop
                 mkalias
                 neovim
+                nodejs
                 opencode
                 python313    # This needs to be listed first to set the default Python version
                 python313Packages.pip
@@ -219,7 +220,6 @@
 			bash-language-server
 
             # Mason dependencies
-            nodejs   # Required for many language servers
             git      # Required for downloading packages
             unzip    # Required for extracting packages
             gnumake  # Required for building some packages
@@ -523,6 +523,10 @@
                         poetry config virtualenvs.in-project true
                     fi
 
+                    # npm global prefix (for Claude Code, etc.)
+                    export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+                    export PATH="$HOME/.npm-global/bin:$PATH"
+
 					# Use powerlevel10k theme
 					source ~/.p10k.zsh
 				'';
@@ -564,6 +568,9 @@
 
                     # Nix update
                     nix-update = "nix flake update";
+
+                    # Update Claude Code
+                    claude-update = "npm install -g @anthropic-ai/claude-code";
 				};
 			};
 		};
