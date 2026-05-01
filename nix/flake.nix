@@ -83,6 +83,7 @@
                 gnupg
                 google-cloud-sdk
                 htop
+                miller
                 mkalias
                 neovim
                 nodejs
