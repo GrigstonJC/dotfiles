@@ -4,134 +4,165 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A personal [nix-darwin](https://github.com/LnL7/nix-darwin) flake that declares one
-macOS machine end to end: system defaults, packages, Homebrew casks, and per-user
-dotfiles. Nearly everything lives in `nix/flake.nix`; the other files are data it
-imports or dotfiles it symlinks.
+A multi-machine [nix-darwin](https://github.com/LnL7/nix-darwin) /
+[home-manager](https://github.com/nix-community/home-manager) configuration, designed
+to eventually also cover Linux (Ubuntu/PopOS/Arch, via standalone home-manager — no
+NixOS host exists yet). See `README.md` for first-time and new-machine setup.
 
-There is exactly one host — `darwinConfigurations."m4"` (`aarch64-darwin`, user `jeff`).
+Hosts are named by **role**, not hostname or owner (`personal-mac`, not `m4` or
+`jeff`) — this repo commits no usernames, emails, or hostnames. See **Identity** below.
+
+Currently one host exists: `darwinConfigurations.personal-mac` (`aarch64-darwin`).
 
 ## Commands
 
 All commands run from `nix/` (the `dot` shell alias jumps there).
 
 ```sh
-# Apply the configuration (the `nix-switch` alias)
-sudo darwin-rebuild switch --flake ~/.config/dotfiles/nix#m4
+# Apply the configuration (the `nix-switch` alias) — needs a real identity, see below
+sudo darwin-rebuild switch --flake ~/.config/dotfiles/nix#personal-mac \
+  --override-input identity "path:$HOME/.config/dotfiles-identity"
 
 # Evaluate + build WITHOUT activating — use this to check a change
-darwin-rebuild build --flake .#m4
+darwin-rebuild build --flake .#personal-mac --override-input identity "path:$HOME/.config/dotfiles-identity"
+
+# Fresh-clone sanity check — evaluates with the committed placeholder identity,
+# no override needed
+nix flake check
 
 # Bump all flake inputs (the `nix-update` alias), then switch
 nix flake update
 ```
 
-There is no test suite, linter, or CI. `darwin-rebuild build` is the only
-verification step: it catches evaluation and build errors without touching the
-live system.
+There is no test suite, linter, or CI. `darwin-rebuild build` is the primary
+verification step: it catches evaluation and build errors without touching the live
+system. `nix store diff-closures <old-result> <new-result>` is the way to confirm a
+structural change didn't alter what actually gets installed — see Gotchas.
 
-## Git workflow
+## Identity
 
-**Never commit directly to `main`, and never push.** Every change — including
-one-line edits — goes on its own branch, and pushing is the user's call, not Claude's.
+Nothing identifying is committed. `nix/identity/identity.nix` is a tracked
+**placeholder** (`username = "changeme";`) that exists only so a fresh clone
+evaluates and `nix flake check` passes. Real values live outside the repo, at
+`~/.config/dotfiles-identity/identity.nix`, and are supplied at switch time via
+`--override-input identity "path:$HOME/.config/dotfiles-identity"` (already wired
+into the `nix-switch` alias). See README.md for the one-time setup.
 
-```sh
-# 1. Branch off main (which should be clean and up to date)
-git checkout -b docs/claude-md      # <type>/<description>
+Two things about this mechanism worth knowing before touching it:
 
-# 2. Commit the change there
-git add CLAUDE.md
-git commit -m "add CLAUDE.md"
-
-# 3. Stop. Do not push. Report the branch name and let the user review.
-```
-
-Branch prefixes: `docs/`, `feat/`, `fix/`, `chore/`.
-
-Note that `git log` on this repo shows a long run of commits made straight to `main`.
-That is history, not the convention — follow the procedure above instead.
-
-### Landing a branch on main
-
-The user does this, or asks for it explicitly. History here is linear (there are no
-merge commits) and should stay that way:
-
-```sh
-git checkout main
-git merge --ff-only docs/claude-md   # rebase the branch onto main first if this fails
-git push
-```
+- **Flakes only evaluate git-tracked files.** A gitignored identity file is invisible
+  to Nix and fails evaluation outright — that's why the placeholder must stay
+  committed rather than gitignored.
+- **`--override-input` does not get written back to `flake.lock`.** Verified directly:
+  `nix build --override-input identity path:<real-dir>` leaves `flake.lock` and
+  `git status` untouched. This is what keeps the real path (and the username inside
+  it) out of git even though `flake.lock` is committed.
 
 ## Architecture
 
-`nix/flake.nix` binds two module functions in a `let` block and composes them at the
-bottom under `darwinConfigurations."m4"`:
+```
+nix/
+  flake.nix              inputs + darwinConfigurations wiring only
+  identity/identity.nix  committed placeholder (see Identity)
+  mk/mkHost.nix          builds one darwinConfiguration from a host descriptor
+  hosts/<role>.nix        { system, profile, stateVersion, homeStateVersion }
+  modules/darwin/        nix-darwin system modules (macOS-only)
+  home/
+    default.nix           picks common + platform + profile for one host
+    common/                the portable core — works on Darwin and (future) Linux
+    darwin/, linux/        platform-only home-manager config (both empty stubs today)
+    profiles/<name>.nix    profile-only home-manager config (personal.nix is empty today)
+  files/                  data files modules import/symlink (p10k, lazyvim, aerospace)
+```
 
-- **`configuration`** — system scope. macOS defaults (`system.defaults`, keyboard
-  remaps), `services.aerospace` / `services.jankyborders`, `environment.systemPackages`,
-  the whole `homebrew` block, `fonts.packages`, and a post-activation script
-  (`system.activationScripts.nixApplications`) that rsyncs nix app trampolines into
-  `~/Applications/Nix Trampolines` so Spotlight indexes them, then runs
-  `activateSettings -u` to avoid a logout cycle.
-- **`homeconfig`** — home-manager scope for user `jeff`. `home.file` symlinks,
-  `home.packages` (dev tooling: pyright, shellcheck, shfmt, bash-language-server),
-  and `programs.{zsh,tmux,dircolors}` including all shell aliases.
+`nix/flake.nix` calls `mk/mkHost.nix` once per host in `hosts/`. `mkHost.nix` resolves
+identity, then builds a `nix-darwin.lib.darwinSystem` wiring in `modules/darwin`
+(system scope), `nix-homebrew`, and `home-manager.darwinModules.home-manager` — the
+latter pointing `home-manager.users.<username>` at `home/default.nix`.
 
-The modules list also wires in `nix-homebrew` (with Rosetta enabled) and
-`home-manager` (`useGlobalPkgs`, `useUserPackages`).
+`home/default.nix` always imports `home/common/`, then picks `home/darwin` or
+`home/linux` by inspecting `host.system` (a plain string — **not**
+`pkgs.stdenv.isDarwin`; see Gotchas), then imports `home/profiles/<host.profile>.nix`.
 
 ### Where a new package goes
 
-Three separate channels, all declared in `flake.nix`:
-
 | Need | Where |
 |---|---|
-| CLI tool available system-wide | `environment.systemPackages` |
-| Per-user dev tooling / LSPs | `homeconfig`'s `home.packages` |
-| GUI app or GNU-flavored CLI | `homebrew.casks` / `homebrew.brews` |
-| Mac App Store app | `homebrew.masApps` (needs the numeric app id) |
+| Portable — wanted on every machine, works on Linux too | `home/common/packages.nix` |
+| macOS system settings/services | `modules/darwin/**` |
+| GUI app or Mac App Store app | `homebrew.casks` / `masApps` (`modules/darwin/homebrew.nix`) |
+| GNU-flavored CLI with no nix equivalent | Homebrew — but check first; most do have one |
 
-`homebrew.onActivation.cleanup = "zap"` — anything installed manually and not listed
-here is **removed** on the next rebuild. `upgrade = true` also means brew packages
-move on every switch.
+`homebrew.onActivation.cleanup = "zap"` (`modules/darwin/homebrew.nix`) — anything
+installed manually and not listed there is **removed** on the next rebuild.
+`upgrade = true` also means brew packages move on every switch.
 
-Python is special: `python313` is listed first in `systemPackages` deliberately, to
-win the PATH race and become the default `python3`. `python311`/`python312` are also
-installed and reachable via the `python311`/`python312` aliases.
+**Standardize-with-override:** custom options under `my.*` (declared in
+`home/common/options.nix`) express "same everywhere, but a host can override it."
+`my.defaultPython` is the example today — a host would override it via its own
+home-manager config, not by editing `home/common/`.
+
+Python is special, twice over:
+- `config.my.defaultPython` (default `pkgs.python313`) must stay **first** in
+  `home/common/python.nix`'s package list — home-manager's profile builder resolves
+  same-priority filename collisions (`bin/python3`, `bin/pip3`, …) by list order.
+- `python311`/`python312` are **not** installed via `home.packages` at all — only
+  `config.my.defaultPython` is. They're reachable solely through the fully-qualified
+  store paths baked into their zsh aliases (`home/common/shell.nix`), which pulls each
+  into the closure without installing a second `bin/idle`/`bin/python3`/etc. that would
+  collide with the default's. `environment.systemPackages` tolerates that exact
+  collision silently (`ignoreCollisions`-style behavior); `home.packages` does not —
+  confirmed by building it the naive way first and hitting a hard
+  `pkgs.buildEnv error: two given paths contain a conflicting subpath` failure.
 
 ### Neovim
 
 `lvim` (the `lvim` alias, `NVIM_APPNAME=lazyvim nvim`) is the only Neovim
-configuration — it points Neovim at `~/.config/lazyvim`, which home-manager symlinks
-from `nix/lazyvim/**`. LazyVim bootstraps `lazy.nvim` by cloning it at first launch
-and resolves its own plugins, so it is **not** pinned by nix. Plain `neovim` in
-`environment.systemPackages` just supplies the unconfigured `nvim` binary LazyVim
-runs on top of — there is no separate nix-managed plugin/config setup anymore.
+configuration — it points Neovim at `~/.config/lazyvim`, symlinked by
+`home/common/editor.nix` from `nix/files/lazyvim/**`. LazyVim bootstraps `lazy.nvim`
+by cloning it at first launch and resolves its own plugins, so it is **not** pinned by
+nix. Plain `neovim` in `modules/darwin/system-defaults.nix` just supplies the
+unconfigured `nvim` binary LazyVim runs on top of.
 
-Adding a file under `nix/lazyvim/` is not enough — each path needs its own
-`home.file.".config/lazyvim/…".source` entry in `homeconfig`, or it never reaches
-`$HOME`.
+Adding a file under `nix/files/lazyvim/` is not enough — each path needs its own
+`home.file.".config/lazyvim/…".source` entry in `home/common/editor.nix`, or it never
+reaches `$HOME`.
 
-### Other imported data
+### `nix/files/`
 
-- `nix/aerospace-config.toml` — the AeroSpace tiling-WM config (alt-based focus/move/
-  workspace bindings), pulled in with `pkgs.lib.importTOML`. Edits require a rebuild.
-- `nix/p10k_configuration` — the powerlevel10k theme, symlinked to `~/.p10k.zsh` and
-  sourced at the end of the zsh `initContent`.
+Data consumed by modules, not modules themselves:
+
+- `aerospace.toml` — AeroSpace tiling-WM config, pulled in with `pkgs.lib.importTOML`
+  by `modules/darwin/aerospace.nix`. Edits require a rebuild.
+- `p10k.zsh` — the powerlevel10k theme, symlinked to `~/.p10k.zsh` by
+  `home/common/shell.nix` and sourced at the end of the zsh `initContent`.
+- `lazyvim/**` — see Neovim above.
 
 ## Gotchas
 
-- **`nix/.p10k.zsh` is dead weight.** It is byte-identical to `p10k_configuration` and
-  tracked in git, but nothing references it. Edit `p10k_configuration`; changing only
-  `.p10k.zsh` has no effect.
+- **Never reference `pkgs` inside a home-manager module's `imports` list.** `pkgs` in a
+  `useGlobalPkgs` home-manager submodule is itself threaded through `config`, so using
+  it to decide what to import (e.g. `if pkgs.stdenv.isDarwin then …`) is a genuine
+  infinite-recursion trap — hit this directly while building `home/default.nix`. Use a
+  plain value that doesn't depend on `config` instead (here, `host.system`, a string
+  known up front).
+- **Nothing named `lib/` at the repo root.** A global `~/.gitignore` on this machine
+  (generic Python-project boilerplate) ignores any `lib/` directory anywhere in the
+  tree, silently. The host-builder helper lives at `nix/mk/` for exactly this reason —
+  don't rename it back to `lib/`.
 - **Never edit the generated dotfiles in `$HOME`.** `~/.p10k.zsh`, `~/.config/lazyvim/*`,
   and the zsh config are read-only `/nix/store` symlinks. Edit the source here, rebuild.
-- **String escaping in `flake.nix`.** Inside `''…''` blocks, `${…}` is Nix interpolation
-  (e.g. `${pkgs.python311}/bin/python3`) and `''${…}` is a literal shell `${…}`. Getting
-  this wrong usually shows up as a confusing evaluation error, not a runtime one.
-- **Indentation is mixed** — tabs in the older sections, spaces in the newer ones. Match
-  whatever the surrounding block uses rather than reformatting.
-- **Don't bump `system.stateVersion` (5) or `home.stateVersion` ("23.05")** as part of an
+- **String escaping in Nix `''…''` blocks.** `${…}` is Nix interpolation
+  (e.g. `${pkgs.rsync}/bin/rsync`) and `''${…}` is a literal shell `${…}`. Getting this
+  wrong usually shows up as a confusing evaluation error, not a runtime one.
+- **Indentation is mixed** — tabs in code carried over from the original single-file
+  flake, spaces in code written since. Match whatever the surrounding file uses rather
+  than reformatting.
+- **Don't bump `stateVersion`/`homeStateVersion` in `hosts/*.nix`** as part of an
   unrelated change; they pin migration behavior, not a version to keep current.
+- **A structural refactor is not proven safe by "it builds."** Two derivations can both
+  build successfully while installing different things. Use
+  `nix store diff-closures <old> <new>` (on the two `result` symlinks, or saved store
+  paths) and explain every line item — don't accept an unexplained diff.
 - The zsh `initContent` installs Poetry over the network on first shell start if it is
   missing — Poetry is intentionally outside nix here.
