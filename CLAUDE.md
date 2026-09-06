@@ -20,12 +20,14 @@ Two hosts exist today: `darwinConfigurations.personal-mac` and `.work-mac` (both
 All commands run from `nix/` (the `dot` shell alias jumps there).
 
 ```sh
-# Apply the configuration (the `nix-switch` alias) — needs a real identity, see below
-sudo darwin-rebuild switch --flake ~/.config/dotfiles/nix#personal-mac \
+# Apply the configuration (the `nix-switch` alias) — needs a real identity, see
+# below, and <host> is whichever of personal-mac/work-mac you're building for
+# (see "Which host is 'this machine'?" below)
+sudo darwin-rebuild switch --flake ~/.config/dotfiles/nix#<host> \
   --override-input identity "path:$HOME/.config/dotfiles-identity"
 
 # Evaluate + build WITHOUT activating — use this to check a change
-darwin-rebuild build --flake .#personal-mac --override-input identity "path:$HOME/.config/dotfiles-identity"
+darwin-rebuild build --flake .#<host> --override-input identity "path:$HOME/.config/dotfiles-identity"
 
 # Fresh-clone sanity check — evaluates with the committed placeholder identity,
 # no override needed
@@ -39,6 +41,52 @@ There is no test suite, linter, or CI. `darwin-rebuild build` is the primary
 verification step: it catches evaluation and build errors without touching the live
 system. `nix store diff-closures <old-result> <new-result>` is the way to confirm a
 structural change didn't alter what actually gets installed — see Gotchas.
+
+## Git workflow
+
+**Never commit directly to `main`, and never push.** Every change — including
+one-line edits — goes on its own branch, and pushing is the user's call, not
+Claude's.
+
+```sh
+# 1. Branch off main (which should be clean and up to date)
+git checkout -b feat/add-work-mac   # <type>/<description>
+
+# 2. Commit the change there
+git add <files>
+git commit -m "..."
+
+# 3. Stop. Do not push. Report the branch name and let the user review.
+```
+
+Branch prefixes: `docs/`, `feat/`, `fix/`, `chore/`.
+
+Note that early `git log` history on this repo shows commits made straight to
+`main`. That is history, not the convention — follow the procedure above
+instead.
+
+### Landing a branch on main
+
+The user does this, or asks for it explicitly — via a GitHub PR, merged there.
+That produces a merge commit each time; that's fine, and matches how this
+repo has actually been landing branches (don't assume or aim for a
+fast-forward-only, linear history — it isn't one).
+
+## Keeping README.md current
+
+Update `README.md` whenever a change affects setup, the host list, or any
+"how do I do X" a user would need to know — a new host, a changed command, a
+renamed option someone would type. Check it as part of making the change,
+not only when someone happens to notice it's gone stale (see git history for
+an example: the host-selection step and host list went unmentioned for a
+while after `work-mac` was added).
+
+`README.md` and this file have different jobs. README is for **using** this
+repo: setup steps, what exists, how to add a host — written for someone
+about to run a command. It is not for architecture or rationale; that
+belongs here. If you're explaining *why* something works a particular way,
+it goes in CLAUDE.md; if you're telling someone what to *do*, it goes in
+README.md.
 
 ## Identity
 
