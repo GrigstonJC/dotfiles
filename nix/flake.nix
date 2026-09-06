@@ -29,8 +29,9 @@
 	in
 	{
 		darwinConfigurations = {
-			# Build with: $ darwin-rebuild build --flake .#personal-mac
-			personal-mac = mkHost (import ./hosts/personal-mac.nix);
+			# Build with: $ darwin-rebuild build --flake .#<name>
+			personal-mac = mkHost "personal-mac" (import ./hosts/personal-mac.nix);
+			work-mac = mkHost "work-mac" (import ./hosts/work-mac.nix);
 		};
 
 		# Expose the package set, including overlays, for convenience.

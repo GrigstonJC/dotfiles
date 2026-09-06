@@ -12,19 +12,22 @@ NixOS host exists yet). See `README.md` for first-time and new-machine setup.
 Hosts are named by **role**, not hostname or owner (`personal-mac`, not `m4` or
 `jeff`) — this repo commits no usernames, emails, or hostnames. See **Identity** below.
 
-Currently one host exists: `darwinConfigurations.personal-mac` (`aarch64-darwin`).
+Two hosts exist today: `darwinConfigurations.personal-mac` and `.work-mac` (both
+`aarch64-darwin`).
 
 ## Commands
 
 All commands run from `nix/` (the `dot` shell alias jumps there).
 
 ```sh
-# Apply the configuration (the `nix-switch` alias) — needs a real identity, see below
-sudo darwin-rebuild switch --flake ~/.config/dotfiles/nix#personal-mac \
+# Apply the configuration (the `nix-switch` alias) — needs a real identity, see
+# below, and <host> is whichever of personal-mac/work-mac you're building for
+# (see "Which host is 'this machine'?" below)
+sudo darwin-rebuild switch --flake ~/.config/dotfiles/nix#<host> \
   --override-input identity "path:$HOME/.config/dotfiles-identity"
 
 # Evaluate + build WITHOUT activating — use this to check a change
-darwin-rebuild build --flake .#personal-mac --override-input identity "path:$HOME/.config/dotfiles-identity"
+darwin-rebuild build --flake .#<host> --override-input identity "path:$HOME/.config/dotfiles-identity"
 
 # Fresh-clone sanity check — evaluates with the committed placeholder identity,
 # no override needed
@@ -39,16 +42,69 @@ verification step: it catches evaluation and build errors without touching the l
 system. `nix store diff-closures <old-result> <new-result>` is the way to confirm a
 structural change didn't alter what actually gets installed — see Gotchas.
 
+## Git workflow
+
+**Never commit directly to `main`, and never push.** Every change — including
+one-line edits — goes on its own branch, and pushing is the user's call, not
+Claude's.
+
+```sh
+# 1. Branch off main (which should be clean and up to date)
+git checkout -b feat/add-work-mac   # <type>/<description>
+
+# 2. Commit the change there
+git add <files>
+git commit -m "..."
+
+# 3. Stop. Do not push. Report the branch name and let the user review.
+```
+
+Branch prefixes: `docs/`, `feat/`, `fix/`, `chore/`.
+
+Note that early `git log` history on this repo shows commits made straight to
+`main`. That is history, not the convention — follow the procedure above
+instead.
+
+### Landing a branch on main
+
+The user does this, or asks for it explicitly — via a GitHub PR, merged there.
+That produces a merge commit each time; that's fine, and matches how this
+repo has actually been landing branches (don't assume or aim for a
+fast-forward-only, linear history — it isn't one).
+
+## Keeping README.md current
+
+Update `README.md` whenever a change affects setup, the host list, or any
+"how do I do X" a user would need to know — a new host, a changed command, a
+renamed option someone would type. Check it as part of making the change,
+not only when someone happens to notice it's gone stale (see git history for
+an example: the host-selection step and host list went unmentioned for a
+while after `work-mac` was added).
+
+`README.md` and this file have different jobs. README is for **using** this
+repo: setup steps, what exists, how to add a host — written for someone
+about to run a command. It is not for architecture or rationale; that
+belongs here. If you're explaining *why* something works a particular way,
+it goes in CLAUDE.md; if you're telling someone what to *do*, it goes in
+README.md.
+
 ## Identity
 
 Nothing identifying is committed. `nix/identity/identity.nix` is a tracked
-**placeholder** (`username = "changeme";`) that exists only so a fresh clone
-evaluates and `nix flake check` passes. Real values live outside the repo, at
-`~/.config/dotfiles-identity/identity.nix`, and are supplied at switch time via
+**placeholder** (`username`, `gitName`, `gitEmail`) that exists only so a fresh
+clone evaluates and `nix flake check` passes. Real values live outside the repo,
+at `~/.config/dotfiles-identity/identity.nix`, and are supplied at switch time via
 `--override-input identity "path:$HOME/.config/dotfiles-identity"` (already wired
 into the `nix-switch` alias). See README.md for the one-time setup.
 
-Two things about this mechanism worth knowing before touching it:
+`home/common/git.nix` reads `identity.gitName`/`identity.gitEmail` for
+`programs.git.settings.user.{name,email}` — **not** a profile. Each host already
+has its own identity file, so git identity is naturally per-host without needing
+a `home/profiles/*.nix` split; don't hardcode a name/email into a profile file to
+give one host a different git identity; put it in that host's local identity file
+instead.
+
+Two things about the identity mechanism worth knowing before touching it:
 
 - **Flakes only evaluate git-tracked files.** A gitignored identity file is invisible
   to Nix and fails evaluation outright — that's why the placeholder must stay
@@ -71,7 +127,7 @@ nix/
     default.nix           picks common + platform + profile for one host
     common/                the portable core — works on Darwin and (future) Linux
     darwin/, linux/        platform-only home-manager config (both empty stubs today)
-    profiles/<name>.nix    profile-only home-manager config (personal.nix is empty today)
+    profiles/<name>.nix    profile-only home-manager config (both empty today)
   files/                  data files modules import/symlink (p10k, lazyvim, aerospace)
 ```
 
@@ -83,6 +139,18 @@ latter pointing `home-manager.users.<username>` at `home/default.nix`.
 `home/default.nix` always imports `home/common/`, then picks `home/darwin` or
 `home/linux` by inspecting `host.system` (a plain string — **not**
 `pkgs.stdenv.isDarwin`; see Gotchas), then imports `home/profiles/<host.profile>.nix`.
+
+**Which host is "this machine"?** There's no detection — it's whichever flake
+attribute you build with, chosen once by the human running the command. `mkHost`
+takes that name as an explicit argument (`mkHost "personal-mac" (import
+./hosts/personal-mac.nix)` in `flake.nix`) and threads it onto `host.name`, which
+`home/default.nix` exports as `$DOTFILES_HOST` via `home.sessionVariables`. That's
+how `nix-switch` (`home/common/shell.nix`) knows which host to target without a
+hardcoded name in a file every host shares — it reads `$DOTFILES_HOST`, set by the
+*previous* successful switch. A machine that has never switched yet has no value
+to read, which is exactly why first setup on a new host uses the full explicit
+`darwin-rebuild switch --flake …#<name> …` command by hand (README) rather than
+`nix-switch`.
 
 ### Where a new package goes
 
@@ -140,6 +208,12 @@ Data consumed by modules, not modules themselves:
 
 ## Gotchas
 
+- **Never hardcode a host name (`personal-mac`, `work-mac`, …) in anything under
+  `home/common/` or `modules/`.** Those files are shared by every host; a literal
+  host name there is correct for exactly one of them. `nix-switch` shipped with
+  `#personal-mac` hardcoded for a while — harmless when it was the only host,
+  a real bug once `work-mac` existed. Use `host.name`/`$DOTFILES_HOST` instead
+  (see Architecture).
 - **Never reference `pkgs` inside a home-manager module's `imports` list.** `pkgs` in a
   `useGlobalPkgs` home-manager submodule is itself threaded through `config`, so using
   it to decide what to import (e.g. `if pkgs.stdenv.isDarwin then …`) is a genuine
@@ -159,7 +233,14 @@ Data consumed by modules, not modules themselves:
   flake, spaces in code written since. Match whatever the surrounding file uses rather
   than reformatting.
 - **Don't bump `stateVersion`/`homeStateVersion` in `hosts/*.nix`** as part of an
-  unrelated change; they pin migration behavior, not a version to keep current.
+  unrelated change; they pin migration behavior, not a version to keep current. A
+  new host should get the *current* values at creation time, not copy an existing
+  host's — e.g. `work-mac`'s `homeStateVersion` is `"26.05"` where `personal-mac`'s
+  is still `"23.05"`. This is also why `home/common/git.nix` deliberately doesn't
+  set `programs.git.signing.format`: home-manager's own default for it depends on
+  each host's `home.stateVersion` (legacy `"openpgp"` below `"25.05"`, `null`
+  after), and hardcoding it in the shared file would override that per-host
+  migration behavior for every host.
 - **A structural refactor is not proven safe by "it builds."** Two derivations can both
   build successfully while installing different things. Use
   `nix store diff-closures <old> <new>` (on the two `result` symlinks, or saved store
