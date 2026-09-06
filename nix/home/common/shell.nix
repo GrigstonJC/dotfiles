@@ -21,17 +21,6 @@
 	programs.zsh = {
 		enable = true;
 		initContent = pkgs.lib.mkBefore ''
-			# Use gnu versions of shell commands
-			BREW_BIN="/usr/local/bin/brew"
-			if [ -f "/opt/homebrew/bin/brew" ]; then BREW_BIN="/opt/homebrew/bin/brew" fi
-
-			if type "''${BREW_BIN}" &> /dev/null; then export BREW_PREFIX="$("''${BREW_BIN}" --prefix)"
-				for bindir in "''${BREW_PREFIX}/opt/"*"/libexec/gnubin"; do export PATH=$bindir:$PATH; done
-				for bindir in "''${BREW_PREFIX}/opt/"*"/bin"; do export PATH=$bindir:$PATH; done
-				for mandir in "''${BREW_PREFIX}/opt/"*"/libexec/gnuman"; do export MANPATH=$mandir:$MANPATH; done
-				for mandir in "''${BREW_PREFIX}/opt/"*"/share/man/man1"; do export MANPATH=$mandir:$MANPATH; done
-			fi
-
 			# Use the right tmux config
 			export TMUX_CONFIG_DIR="$HOME/.config/tmux"
 
@@ -72,9 +61,11 @@
 			];
 		};
 		shellAliases = {
-			# Make `ls` pretty
-			ls = "gls --color=tty";
-			ll = "gls -la --group-directories-first --color=tty";
+			# Make `ls` pretty. Unprefixed: nix's coreutils ships plain `ls`
+			# (unlike Homebrew's g-prefix convention), and it's ahead of
+			# /bin/ls on PATH via the home-manager profile.
+			ls = "ls --color=tty";
+			ll = "ls -la --group-directories-first --color=tty";
 
 			desktop = "cd ~/Desktop/";
 			dot = "cd ~/.config/dotfiles/nix/";

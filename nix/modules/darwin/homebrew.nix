@@ -5,35 +5,12 @@
 		enable = true;
 		onActivation.cleanup = "zap";
 		onActivation.upgrade = true;
+		# GNU-flavored commands used to live here — migrated to nix
+		# (home/common/packages.nix), which provides the same tool identically
+		# on Linux too. mas and nvtop stay on Homebrew: no nix-managed
+		# equivalent makes sense for a Mac App Store CLI or a macOS-specific
+		# GPU monitor.
 		brews = [
-			# Install GNU-flavored commands
-			"autoconf"
-			"bash"
-			"binutils"
-			"coreutils"
-			"diffutils"
-			"ed"
-			"findutils"
-			"flex"
-			"gawk"
-			"gnu-indent"
-			"gnu-sed"
-			"gnu-tar"
-			"gnu-which"
-			"gpatch"
-			"grep"
-			"gzip"
-			"less"
-			"m4"
-			"make"
-			"nano"
-			"screen"
-			"watch"
-			"wdiff"
-			"wget"
-			"zip"
-
-			# Others
 			"mas"
 			"nvtop"
 		];
