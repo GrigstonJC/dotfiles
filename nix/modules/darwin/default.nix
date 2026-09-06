@@ -1,9 +1,9 @@
 { ... }:
 {
   imports = [
-    ./system-defaults.nix
-    ./homebrew.nix
     ./aerospace.nix
+    ./homebrew.nix
+    ./system-defaults.nix
     ./trampolines.nix
   ];
 }

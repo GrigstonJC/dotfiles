@@ -1,6 +1,5 @@
-# LazyVim is the only Neovim configuration this repo manages — see
-# CLAUDE.md. The nix package providing the `nvim` binary itself lives in
-# modules/darwin/system-defaults.nix (Darwin-only for now).
+# The nvim binary itself is installed in modules/darwin/system-defaults.nix
+# (Darwin-only for now).
 { ... }:
 {
 	home.file.".config/lazyvim/init.lua".source = ../../files/lazyvim/init.lua;

@@ -5,11 +5,10 @@
 		enable = true;
 		onActivation.cleanup = "zap";
 		onActivation.upgrade = true;
-		# GNU-flavored commands used to live here — migrated to nix
-		# (home/common/packages.nix), which provides the same tool identically
-		# on Linux too. mas and nvtop stay on Homebrew: no nix-managed
-		# equivalent makes sense for a Mac App Store CLI or a macOS-specific
-		# GPU monitor.
+		# Only things with no sensible nix equivalent belong here — a Mac App
+		# Store CLI and a macOS-specific GPU monitor. GNU-flavored commands and
+		# anything else nix provides identically live in
+		# home/common/packages.nix instead.
 		brews = [
 			"mas"
 			"nvtop"
@@ -23,9 +22,9 @@
 			"dropbox"
 			"element"
 			"expressvpn"
+			"firefox"
 			"gimp"
 			"google-chrome"
-			"firefox"
 			"iterm2"
 			"libreoffice"
 			"neo4j"
