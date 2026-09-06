@@ -45,6 +45,22 @@
 
 			# Use powerlevel10k theme
 			source ~/.p10k.zsh
+
+			# Nix rebuild. Warns if flake.lock is stale before switching —
+			# stale inputs (Homebrew's live Cask API in particular) can break
+			# silently for months without this. Doesn't update anything
+			# itself; run nix-update, review, and commit that separately.
+			nix-switch() {
+				local lock="$HOME/.config/dotfiles/nix/flake.lock"
+				if [ -f "$lock" ]; then
+					local age_days=$(( ($(date +%s) - $(stat --format=%Y "$lock")) / 86400 ))
+					if [ "$age_days" -ge 30 ]; then
+						echo "flake.lock is $age_days days old — consider running nix-update first" >&2
+					fi
+				fi
+				sudo darwin-rebuild switch --flake "$HOME/.config/dotfiles/nix#personal-mac" \
+					--override-input identity "path:$HOME/.config/dotfiles-identity"
+			}
 		'';
 		plugins = [
 			{
@@ -77,10 +93,6 @@
 			python311 = "${pkgs.python311}/bin/python3";
 			python312 = "${pkgs.python312}/bin/python3";
 			python313 = "${pkgs.python313}/bin/python3";
-
-			# Nix rebuild. Hardcoded to personal-mac while it's the only host;
-			# becomes a host-parameterized function once work-mac exists.
-			nix-switch = "sudo darwin-rebuild switch --flake \"$HOME/.config/dotfiles/nix#personal-mac\" --override-input identity \"path:$HOME/.config/dotfiles-identity\"";
 
 			# Nix update
 			nix-update = "nix flake update";
