@@ -92,6 +92,18 @@ latter pointing `home-manager.users.<username>` at `home/default.nix`.
 `home/linux` by inspecting `host.system` (a plain string — **not**
 `pkgs.stdenv.isDarwin`; see Gotchas), then imports `home/profiles/<host.profile>.nix`.
 
+**Which host is "this machine"?** There's no detection — it's whichever flake
+attribute you build with, chosen once by the human running the command. `mkHost`
+takes that name as an explicit argument (`mkHost "personal-mac" (import
+./hosts/personal-mac.nix)` in `flake.nix`) and threads it onto `host.name`, which
+`home/default.nix` exports as `$DOTFILES_HOST` via `home.sessionVariables`. That's
+how `nix-switch` (`home/common/shell.nix`) knows which host to target without a
+hardcoded name in a file every host shares — it reads `$DOTFILES_HOST`, set by the
+*previous* successful switch. A machine that has never switched yet has no value
+to read, which is exactly why first setup on a new host uses the full explicit
+`darwin-rebuild switch --flake …#<name> …` command by hand (README) rather than
+`nix-switch`.
+
 ### Where a new package goes
 
 | Need | Where |
@@ -148,6 +160,12 @@ Data consumed by modules, not modules themselves:
 
 ## Gotchas
 
+- **Never hardcode a host name (`personal-mac`, `work-mac`, …) in anything under
+  `home/common/` or `modules/`.** Those files are shared by every host; a literal
+  host name there is correct for exactly one of them. `nix-switch` shipped with
+  `#personal-mac` hardcoded for a while — harmless when it was the only host,
+  a real bug once `work-mac` existed. Use `host.name`/`$DOTFILES_HOST` instead
+  (see Architecture).
 - **Never reference `pkgs` inside a home-manager module's `imports` list.** `pkgs` in a
   `useGlobalPkgs` home-manager submodule is itself threaded through `config`, so using
   it to decide what to import (e.g. `if pkgs.stdenv.isDarwin then …`) is a genuine
