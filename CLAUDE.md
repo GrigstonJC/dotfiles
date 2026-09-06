@@ -12,7 +12,8 @@ NixOS host exists yet). See `README.md` for first-time and new-machine setup.
 Hosts are named by **role**, not hostname or owner (`personal-mac`, not `m4` or
 `jeff`) — this repo commits no usernames, emails, or hostnames. See **Identity** below.
 
-Currently one host exists: `darwinConfigurations.personal-mac` (`aarch64-darwin`).
+Two hosts exist today: `darwinConfigurations.personal-mac` and `.work-mac` (both
+`aarch64-darwin`).
 
 ## Commands
 
@@ -42,13 +43,20 @@ structural change didn't alter what actually gets installed — see Gotchas.
 ## Identity
 
 Nothing identifying is committed. `nix/identity/identity.nix` is a tracked
-**placeholder** (`username = "changeme";`) that exists only so a fresh clone
-evaluates and `nix flake check` passes. Real values live outside the repo, at
-`~/.config/dotfiles-identity/identity.nix`, and are supplied at switch time via
+**placeholder** (`username`, `gitName`, `gitEmail`) that exists only so a fresh
+clone evaluates and `nix flake check` passes. Real values live outside the repo,
+at `~/.config/dotfiles-identity/identity.nix`, and are supplied at switch time via
 `--override-input identity "path:$HOME/.config/dotfiles-identity"` (already wired
 into the `nix-switch` alias). See README.md for the one-time setup.
 
-Two things about this mechanism worth knowing before touching it:
+`home/common/git.nix` reads `identity.gitName`/`identity.gitEmail` for
+`programs.git.settings.user.{name,email}` — **not** a profile. Each host already
+has its own identity file, so git identity is naturally per-host without needing
+a `home/profiles/*.nix` split; don't hardcode a name/email into a profile file to
+give one host a different git identity; put it in that host's local identity file
+instead.
+
+Two things about the identity mechanism worth knowing before touching it:
 
 - **Flakes only evaluate git-tracked files.** A gitignored identity file is invisible
   to Nix and fails evaluation outright — that's why the placeholder must stay
@@ -71,7 +79,7 @@ nix/
     default.nix           picks common + platform + profile for one host
     common/                the portable core — works on Darwin and (future) Linux
     darwin/, linux/        platform-only home-manager config (both empty stubs today)
-    profiles/<name>.nix    profile-only home-manager config (personal.nix is empty today)
+    profiles/<name>.nix    profile-only home-manager config (both empty today)
   files/                  data files modules import/symlink (p10k, lazyvim, aerospace)
 ```
 
@@ -159,7 +167,14 @@ Data consumed by modules, not modules themselves:
   flake, spaces in code written since. Match whatever the surrounding file uses rather
   than reformatting.
 - **Don't bump `stateVersion`/`homeStateVersion` in `hosts/*.nix`** as part of an
-  unrelated change; they pin migration behavior, not a version to keep current.
+  unrelated change; they pin migration behavior, not a version to keep current. A
+  new host should get the *current* values at creation time, not copy an existing
+  host's — e.g. `work-mac`'s `homeStateVersion` is `"26.05"` where `personal-mac`'s
+  is still `"23.05"`. This is also why `home/common/git.nix` deliberately doesn't
+  set `programs.git.signing.format`: home-manager's own default for it depends on
+  each host's `home.stateVersion` (legacy `"openpgp"` below `"25.05"`, `null`
+  after), and hardcoding it in the shared file would override that per-host
+  migration behavior for every host.
 - **A structural refactor is not proven safe by "it builds."** Two derivations can both
   build successfully while installing different things. Use
   `nix store diff-closures <old> <new>` (on the two `result` symlinks, or saved store

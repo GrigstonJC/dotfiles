@@ -34,8 +34,13 @@ repo and are supplied at switch time:
 ```sh
 mkdir -p ~/.config/dotfiles-identity
 cp ~/.config/dotfiles/nix/identity/identity.nix ~/.config/dotfiles-identity/
-$EDITOR ~/.config/dotfiles-identity/identity.nix   # fill in your real username
+$EDITOR ~/.config/dotfiles-identity/identity.nix   # fill in username, gitName, gitEmail
 ```
+
+Git identity (`programs.git.userName`/`userEmail`, see `home/common/git.nix`) is
+also sourced from here rather than from a profile — each machine has its own
+identity file, so a work machine's git email never needs to live in a
+committed profile.
 
 `--override-input identity "path:$HOME/.config/dotfiles-identity"` (already
 wired into the `nix-switch` alias) points the build at that file instead of

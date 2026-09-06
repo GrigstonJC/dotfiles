@@ -7,4 +7,6 @@
 # See README.md.
 {
   username = "changeme";
+  gitName = "changeme";
+  gitEmail = "changeme@example.com";
 }
