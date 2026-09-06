@@ -3,15 +3,23 @@
 # Identity (username, etc.) is resolved here from the `identity` flake input
 # rather than baked into any host file — see nix/identity/identity.nix and
 # README.md for how the real values get supplied at switch time.
+#
+# `name` is the flake attribute this host is registered under in flake.nix
+# (e.g. "personal-mac") — threaded onto `host` here rather than duplicated
+# inside every hosts/*.nix file, so it stays single-sourced. Consumed by
+# home/default.nix to export $DOTFILES_HOST, which is how nix-switch
+# (home/common/shell.nix) knows which host it's running on without ever
+# hardcoding a host name into a shared file.
 { inputs }:
-host:
+name: host:
 let
   inherit (inputs) self nix-darwin nix-homebrew home-manager identity;
   identityValues = import "${identity}/identity.nix";
   username = identityValues.username;
+  namedHost = host // { inherit name; };
 in
 nix-darwin.lib.darwinSystem {
-  specialArgs = { inherit host; identity = identityValues; };
+  specialArgs = { host = namedHost; identity = identityValues; };
   modules = [
     ../modules/darwin
 
@@ -39,7 +47,7 @@ nix-darwin.lib.darwinSystem {
       home-manager.useGlobalPkgs = true;
       home-manager.useUserPackages = true;
       home-manager.verbose = true;
-      home-manager.extraSpecialArgs = { inherit host; identity = identityValues; };
+      home-manager.extraSpecialArgs = { host = namedHost; identity = identityValues; };
       home-manager.users.${username} = import ../home;
     }
   ];

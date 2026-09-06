@@ -46,11 +46,19 @@
 			# Use powerlevel10k theme
 			source ~/.p10k.zsh
 
-			# Nix rebuild. Warns if flake.lock is stale before switching —
-			# stale inputs (Homebrew's live Cask API in particular) can break
-			# silently for months without this. Doesn't update anything
-			# itself; run nix-update, review, and commit that separately.
+			# Nix rebuild. Targets $DOTFILES_HOST (set per host by
+			# home/default.nix — see hosts/*.nix) rather than a hardcoded
+			# name, so this same function is correct on every machine.
+			# Warns if flake.lock is stale before switching — stale inputs
+			# (Homebrew's live Cask API in particular) can break silently for
+			# months without this. Doesn't update anything itself; run
+			# nix-update, review, and commit that separately.
 			nix-switch() {
+				if [ -z "$DOTFILES_HOST" ]; then
+					echo "DOTFILES_HOST is not set — this shell hasn't picked up a switch yet. Run the full darwin-rebuild switch command by hand once (see README.md), then nix-switch will work." >&2
+					return 1
+				fi
+
 				local lock="$HOME/.config/dotfiles/nix/flake.lock"
 				if [ -f "$lock" ]; then
 					local age_days=$(( ($(date +%s) - $(stat --format=%Y "$lock")) / 86400 ))
@@ -58,7 +66,7 @@
 						echo "flake.lock is $age_days days old — consider running nix-update first" >&2
 					fi
 				fi
-				sudo darwin-rebuild switch --flake "$HOME/.config/dotfiles/nix#personal-mac" \
+				sudo darwin-rebuild switch --flake "$HOME/.config/dotfiles/nix#$DOTFILES_HOST" \
 					--override-input identity "path:$HOME/.config/dotfiles-identity"
 			}
 		'';

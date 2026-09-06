@@ -6,6 +6,11 @@
 	home.stateVersion = host.homeStateVersion;
 	programs.home-manager.enable = true;
 
+	# Which flake output built this machine (e.g. "personal-mac") — how
+	# nix-switch (home/common/shell.nix) knows what to switch without a
+	# hardcoded host name in a file every host shares.
+	home.sessionVariables.DOTFILES_HOST = host.name;
+
 	# Platform comes from host.system (a plain string, known up front) rather
 	# than pkgs.stdenv.isDarwin — referencing pkgs inside `imports` on a
 	# useGlobalPkgs home-manager submodule is a real infinite-recursion trap,
