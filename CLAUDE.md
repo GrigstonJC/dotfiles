@@ -75,7 +75,7 @@ bottom under `darwinConfigurations."m4"`:
   `activateSettings -u` to avoid a logout cycle.
 - **`homeconfig`** — home-manager scope for user `jeff`. `home.file` symlinks,
   `home.packages` (dev tooling: pyright, shellcheck, shfmt, bash-language-server),
-  and `programs.{neovim,zsh,tmux,dircolors}` including all shell aliases.
+  and `programs.{zsh,tmux,dircolors}` including all shell aliases.
 
 The modules list also wires in `nix-homebrew` (with Rosetta enabled) and
 `home-manager` (`useGlobalPkgs`, `useUserPackages`).
@@ -99,19 +99,14 @@ Python is special: `python313` is listed first in `systemPackages` deliberately,
 win the PATH race and become the default `python3`. `python311`/`python312` are also
 installed and reachable via the `python311`/`python312` aliases.
 
-### Two Neovim configurations — pick the right one
+### Neovim
 
-This trips people up. They are unrelated and both are live:
-
-1. **`nvim` / `vi` / `vim`** → `programs.neovim` in `flake.nix`. Plugins come from
-   `pkgs.vimPlugins` (pinned by `flake.lock`); the config is embedded in the flake as
-   `extraConfig` (vimscript) and `initLua` (LSP, cmp, telescope, nvim-tree, ufo).
-   Change it by editing `flake.nix` and rebuilding.
-2. **`lvim`** → the `lvim` alias sets `NVIM_APPNAME=lazyvim`, pointing Neovim at
-   `~/.config/lazyvim`, which home-manager symlinks from `nix/lazyvim/**`. This one
-   bootstraps `lazy.nvim` by cloning it at first launch and resolves plugins itself,
-   so it is **not** pinned by nix. Change it by editing files under `nix/lazyvim/`
-   and rebuilding.
+`lvim` (the `lvim` alias, `NVIM_APPNAME=lazyvim nvim`) is the only Neovim
+configuration — it points Neovim at `~/.config/lazyvim`, which home-manager symlinks
+from `nix/lazyvim/**`. LazyVim bootstraps `lazy.nvim` by cloning it at first launch
+and resolves its own plugins, so it is **not** pinned by nix. Plain `neovim` in
+`environment.systemPackages` just supplies the unconfigured `nvim` binary LazyVim
+runs on top of — there is no separate nix-managed plugin/config setup anymore.
 
 Adding a file under `nix/lazyvim/` is not enough — each path needs its own
 `home.file.".config/lazyvim/…".source` entry in `homeconfig`, or it never reaches
