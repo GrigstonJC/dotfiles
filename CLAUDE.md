@@ -160,13 +160,18 @@ auto-derived). It always imports `home/common/`, then picks `home/darwin` or
 attribute you build with, chosen once by the human running the command. Both
 `mkHost` and `mkHomeHost` take that name as an explicit argument (`mkHost
 "personal-mac" (import ./hosts/personal-mac.nix)` in `flake.nix`) and thread it onto
-`host.name`, which `home/default.nix` exports as `$DOTFILES_HOST` via
-`home.sessionVariables`. That's how `nix-switch` (`home/common/shell.nix`) knows
-which host to target without a hardcoded name in a file every host shares — it reads
-`$DOTFILES_HOST`, set by the *previous* successful switch, and dispatches to
-`darwin-rebuild` or `home-manager switch` based on `uname`. A machine that has never
-switched yet has no value to read, which is exactly why first setup on a new host
-uses the full explicit command by hand (README) rather than `nix-switch`.
+`host.name`, which reaches every home module via `extraSpecialArgs`. That's how
+`nix-switch` (`home/common/shell.nix`) knows which host to target without a
+hardcoded name in a file every host shares — `host.name` is interpolated straight
+into the generated `~/.zshrc` at build time (`local flake="…#${host.name}"`), so a
+freshly-switched machine always has the right target baked in without reading
+anything back from the environment at runtime (see Gotchas for why not).
+`home/default.nix` also exports `host.name` as `$DOTFILES_HOST` via
+`home.sessionVariables`, for prompts/scripting — `nix-switch` itself does not read
+it. `nix-switch` dispatches to `darwin-rebuild` or `home-manager switch` based on
+`uname`. A machine that has never switched yet has no generated `~/.zshrc` at all,
+which is exactly why first setup on a new host uses the full explicit command by
+hand (README) rather than `nix-switch`.
 
 ### Where a new package goes
 
@@ -224,12 +229,25 @@ Data consumed by modules, not modules themselves:
 
 ## Gotchas
 
-- **Never hardcode a host name (`personal-mac`, `work-mac`, …) in anything under
-  `home/common/` or `modules/`.** Those files are shared by every host; a literal
-  host name there is correct for exactly one of them. `nix-switch` shipped with
-  `#personal-mac` hardcoded for a while — harmless when it was the only host,
-  a real bug once `work-mac` existed. Use `host.name`/`$DOTFILES_HOST` instead
-  (see Architecture).
+- **Never hardcode a *literal* host name (`personal-mac`, `work-mac`, …) in anything
+  under `home/common/` or `modules/`.** Those files are shared by every host; a
+  literal host name there is correct for exactly one of them. `nix-switch` shipped
+  with `#personal-mac` hardcoded for a while — harmless when it was the only host,
+  a real bug once `work-mac` existed. Use `host.name` (an `extraSpecialArgs`
+  argument, resolved per host at build time — see Architecture) instead; this is
+  different from a session variable like `$DOTFILES_HOST`, which is *not* hardcoding
+  but has its own trap, below.
+- **A `home.sessionVariables` entry (e.g. `$DOTFILES_HOST`) can silently never reach
+  a shell.** `hm-session-vars.sh` guards itself with `if [ -n
+  "$__HM_SESS_VARS_SOURCED" ]; then return; fi`. A long-lived process that started
+  before a variable existed — a tmux server, in one real incident, running since
+  before `$DOTFILES_HOST` was introduced — exports that guard to every pane it
+  spawns, so newer variables never get set there, and `exec zsh` doesn't help (the
+  guard is inherited, not re-evaluated). Only a shell outside that process picks up
+  new session variables correctly. Don't build something that must be correct (like
+  `nix-switch`'s target host) on a session variable alone; bake the value into
+  generated shell *code* instead (e.g. `~/.zshrc`, via Nix interpolation), which has
+  no such guard.
 - **Never reference `pkgs` inside a home-manager module's `imports` list.** `pkgs` in a
   `useGlobalPkgs` home-manager submodule is itself threaded through `config`, so using
   it to decide what to import (e.g. `if pkgs.stdenv.isDarwin then …`) is a genuine

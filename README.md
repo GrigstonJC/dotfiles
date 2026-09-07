@@ -23,8 +23,9 @@ No usernames, emails, or hostnames are committed to this repo — see
    (see "Adding a host") if it's neither. This choice is permanent for this
    machine: it picks which profile/apps you get, and the *first* switch
    below is what `nix-switch` then keeps targeting on every rebuild after
-   (via `$DOTFILES_HOST` — see `CLAUDE.md`). Picking the wrong one gives you
-   the wrong profile with no error and no visible sign a choice was even made.
+   (the host name gets baked into the `~/.zshrc` that switch generates — see
+   `CLAUDE.md`). Picking the wrong one gives you the wrong profile with no
+   error and no visible sign a choice was even made.
 5. Build and switch, replacing `<host>` with the name from step 4:
    - macOS:
      ```sh

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, host, ... }:
 {
 	### DOTFILES ###
 	home.file.".p10k.zsh".source = ../../files/p10k.zsh;
@@ -46,9 +46,16 @@
 			# Use powerlevel10k theme
 			source ~/.p10k.zsh
 
-			# Nix rebuild. Targets $DOTFILES_HOST (set per host by
-			# home/default.nix — see hosts/*.nix) rather than a hardcoded
-			# name, so this same function is correct on every machine.
+			# Nix rebuild. Targets ${host.name} — baked in at switch time by
+			# mk/mkHost.nix (this file is home-manager's initContent, so
+			# ${host.name} is Nix interpolation, resolved before this ever
+			# reaches the shell) rather than a hardcoded name, so this same
+			# function is correct on every machine. Baked in rather than
+			# read from $DOTFILES_HOST at runtime because a long-lived
+			# shell session (a tmux server started before this variable
+			# existed, say) can pin home-manager's once-only sourcing guard
+			# and never pick a new session variable up — see CLAUDE.md
+			# (Gotchas). A regenerated ~/.zshrc has no such guard.
 			# Dispatches to darwin-rebuild or home-manager depending on the
 			# running OS, since a Linux host has no darwin-rebuild at all.
 			# Warns if flake.lock is stale before switching — stale inputs
@@ -56,11 +63,6 @@
 			# months without this. Doesn't update anything itself; run
 			# nix-update, review, and commit that separately.
 			nix-switch() {
-				if [ -z "$DOTFILES_HOST" ]; then
-					echo "DOTFILES_HOST is not set — this shell hasn't picked up a switch yet. Run the full first-switch command by hand once (see README.md), then nix-switch will work." >&2
-					return 1
-				fi
-
 				local lock="$HOME/.config/dotfiles/nix/flake.lock"
 				if [ -f "$lock" ]; then
 					local age_days=$(( ($(date +%s) - $(stat --format=%Y "$lock")) / 86400 ))
@@ -69,7 +71,7 @@
 					fi
 				fi
 
-				local flake="$HOME/.config/dotfiles/nix#$DOTFILES_HOST"
+				local flake="$HOME/.config/dotfiles/nix#${host.name}"
 				local id_override="path:$HOME/.config/dotfiles-identity"
 				if [ "$(uname -s)" = "Darwin" ]; then
 					sudo darwin-rebuild switch --flake "$flake" --override-input identity "$id_override"

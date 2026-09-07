@@ -7,9 +7,10 @@
 # `name` is the flake attribute this host is registered under in flake.nix
 # (e.g. "personal-mac") — threaded onto `host` here rather than duplicated
 # inside every hosts/*.nix file, so it stays single-sourced. Consumed by
-# home/default.nix to export $DOTFILES_HOST, which is how nix-switch
-# (home/common/shell.nix) knows which host it's running on without ever
-# hardcoding a host name into a shared file.
+# home/common/shell.nix, which bakes it straight into the generated
+# ~/.zshrc's nix-switch function, and by home/default.nix, which also
+# exports it as $DOTFILES_HOST for prompts/scripting (not what nix-switch
+# itself reads — see that file's Gotchas note on why).
 { inputs }:
 name: host:
 let
