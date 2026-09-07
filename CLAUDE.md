@@ -272,3 +272,9 @@ Data consumed by modules, not modules themselves:
   `nix flake check` plus that mostly-successful fetch is the strongest verification
   available without one; don't mistake the platform-mismatch errors at the end for a
   real bug in the config.
+- **Don't add an AeroSpace `on-window-detected` rule for Ghostty.** Ghostty's docs
+  recommend `run = ['layout tiling']` for tiling WMs; it was tried on real hardware and
+  does not work — `layout` only decides how a detected window is placed, and each native
+  macOS tab is still reported as its own window, so the workspace still splits. The fix
+  lives on the Ghostty side instead (`home/darwin/ghostty.nix` rebinds `cmd+t` to
+  `new_split:auto`). Revisit if Ghostty ships non-native tabs (ghostty-org/ghostty#10711).
