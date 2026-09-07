@@ -50,7 +50,6 @@
 		awscli2
 		google-cloud-sdk
 		mkalias
-		neovim
 		opencode
 		stow
 		tmate

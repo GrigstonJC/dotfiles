@@ -49,13 +49,15 @@
 			# Nix rebuild. Targets $DOTFILES_HOST (set per host by
 			# home/default.nix — see hosts/*.nix) rather than a hardcoded
 			# name, so this same function is correct on every machine.
+			# Dispatches to darwin-rebuild or home-manager depending on the
+			# running OS, since a Linux host has no darwin-rebuild at all.
 			# Warns if flake.lock is stale before switching — stale inputs
 			# (Homebrew's live Cask API in particular) can break silently for
 			# months without this. Doesn't update anything itself; run
 			# nix-update, review, and commit that separately.
 			nix-switch() {
 				if [ -z "$DOTFILES_HOST" ]; then
-					echo "DOTFILES_HOST is not set — this shell hasn't picked up a switch yet. Run the full darwin-rebuild switch command by hand once (see README.md), then nix-switch will work." >&2
+					echo "DOTFILES_HOST is not set — this shell hasn't picked up a switch yet. Run the full first-switch command by hand once (see README.md), then nix-switch will work." >&2
 					return 1
 				fi
 
@@ -66,8 +68,14 @@
 						echo "flake.lock is $age_days days old — consider running nix-update first" >&2
 					fi
 				fi
-				sudo darwin-rebuild switch --flake "$HOME/.config/dotfiles/nix#$DOTFILES_HOST" \
-					--override-input identity "path:$HOME/.config/dotfiles-identity"
+
+				local flake="$HOME/.config/dotfiles/nix#$DOTFILES_HOST"
+				local id_override="path:$HOME/.config/dotfiles-identity"
+				if [ "$(uname -s)" = "Darwin" ]; then
+					sudo darwin-rebuild switch --flake "$flake" --override-input identity "$id_override"
+				else
+					home-manager switch --flake "$flake" --override-input identity "$id_override"
+				fi
 			}
 		'';
 		plugins = [
