@@ -2,6 +2,7 @@
 {
 	home.packages = with pkgs; [
 		# Portable CLI tools — also needed on non-Darwin, standalone-home-manager hosts
+		colima
 		gnupg
 		gnupg.info  # home.packages only installs meta.outputsToInstall
 		            # ([out man]) by default — list additional outputs like

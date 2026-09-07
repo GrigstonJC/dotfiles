@@ -48,6 +48,7 @@
 	environment.systemPackages = with pkgs; [
 		alacritty
 		awscli2
+		ghostty-bin  # plain ghostty is Linux-only in nixpkgs
 		google-cloud-sdk
 		mkalias
 		opencode
