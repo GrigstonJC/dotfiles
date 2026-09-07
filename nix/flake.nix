@@ -26,12 +26,18 @@
 	outputs = inputs@{ self, nix-darwin, nixpkgs, nix-homebrew, home-manager, identity }:
 	let
 		mkHost = import ./mk/mkHost.nix { inherit inputs; };
+		mkHomeHost = import ./mk/mkHomeHost.nix { inherit inputs; };
 	in
 	{
 		darwinConfigurations = {
 			# Build with: $ darwin-rebuild build --flake .#<name>
 			personal-mac = mkHost "personal-mac" (import ./hosts/personal-mac.nix);
 			work-mac = mkHost "work-mac" (import ./hosts/work-mac.nix);
+		};
+
+		homeConfigurations = {
+			# Build with: $ home-manager build --flake .#<name>
+			linux-desktop = mkHomeHost "linux-desktop" (import ./hosts/linux-desktop.nix);
 		};
 
 		# Expose the package set, including overlays, for convenience.

@@ -5,29 +5,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this repo is
 
 A multi-machine [nix-darwin](https://github.com/LnL7/nix-darwin) /
-[home-manager](https://github.com/nix-community/home-manager) configuration, designed
-to eventually also cover Linux (Ubuntu/PopOS/Arch, via standalone home-manager — no
-NixOS host exists yet). See `README.md` for first-time and new-machine setup.
+[home-manager](https://github.com/nix-community/home-manager) configuration, covering
+macOS (via nix-darwin) and Linux (Ubuntu/PopOS/Arch, via standalone home-manager — nix
+manages the user environment, not the system; no NixOS host exists). See `README.md`
+for first-time and new-machine setup.
 
 Hosts are named by **role**, not hostname or owner (`personal-mac`, not `m4` or
 `jeff`) — this repo commits no usernames, emails, or hostnames. See **Identity** below.
 
-Two hosts exist today: `darwinConfigurations.personal-mac` and `.work-mac` (both
-`aarch64-darwin`).
+Three hosts exist today: `darwinConfigurations.personal-mac`/`.work-mac`
+(`aarch64-darwin`) and `homeConfigurations.linux-desktop` (`x86_64-linux`).
 
 ## Commands
 
 All commands run from `nix/` (the `dot` shell alias jumps there).
 
 ```sh
-# Apply the configuration (the `nix-switch` alias) — needs a real identity, see
-# below, and <host> is whichever of personal-mac/work-mac you're building for
-# (see "Which host is 'this machine'?" below)
+# Apply the configuration (the `nix-switch` function) — needs a real identity,
+# see below, and <host> is whichever host you're building for (see "Which
+# host is 'this machine'?" below). macOS:
 sudo darwin-rebuild switch --flake ~/.config/dotfiles/nix#<host> \
   --override-input identity "path:$HOME/.config/dotfiles-identity"
 
-# Evaluate + build WITHOUT activating — use this to check a change
+# Linux (standalone home-manager):
+home-manager switch --flake ~/.config/dotfiles/nix#<host> \
+  --override-input identity "path:$HOME/.config/dotfiles-identity"
+
+# Evaluate + build WITHOUT activating — darwin hosts:
 darwin-rebuild build --flake .#<host> --override-input identity "path:$HOME/.config/dotfiles-identity"
+# Linux hosts (can't fully realize on a non-Linux builder — see Gotchas):
+nix build .#homeConfigurations.<host>.activationPackage --override-input identity "path:$HOME/.config/dotfiles-identity"
 
 # Fresh-clone sanity check — evaluates with the committed placeholder identity,
 # no override needed
@@ -95,7 +102,7 @@ Nothing identifying is committed. `nix/identity/identity.nix` is a tracked
 clone evaluates and `nix flake check` passes. Real values live outside the repo,
 at `~/.config/dotfiles-identity/identity.nix`, and are supplied at switch time via
 `--override-input identity "path:$HOME/.config/dotfiles-identity"` (already wired
-into the `nix-switch` alias). See README.md for the one-time setup.
+into the `nix-switch` function). See README.md for the one-time setup.
 
 `home/common/git.nix` reads `identity.gitName`/`identity.gitEmail` for
 `programs.git.settings.user.{name,email}` — **not** a profile. Each host already
@@ -118,39 +125,48 @@ Two things about the identity mechanism worth knowing before touching it:
 
 ```
 nix/
-  flake.nix              inputs + darwinConfigurations wiring only
+  flake.nix              inputs + darwinConfigurations/homeConfigurations wiring
   identity/identity.nix  committed placeholder (see Identity)
-  mk/mkHost.nix          builds one darwinConfiguration from a host descriptor
-  hosts/<role>.nix        { system, profile, stateVersion, homeStateVersion }
+  mk/
+    mkHost.nix             builds one darwinConfiguration (macOS) from a host descriptor
+    mkHomeHost.nix          builds one standalone homeConfiguration (Linux) likewise
+  hosts/<role>.nix        { system, profile, homeStateVersion, [stateVersion] } —
+                          stateVersion only applies to darwin hosts
   modules/darwin/        nix-darwin system modules (macOS-only)
   home/
     default.nix           picks common + platform + profile for one host
-    common/                the portable core — works on Darwin and (future) Linux
+    common/                the portable core — works on Darwin and Linux
     darwin/, linux/        platform-only home-manager config (both empty stubs today)
-    profiles/<name>.nix    profile-only home-manager config (both empty today)
+    profiles/<name>.nix    profile-only home-manager config (all empty today)
   files/                  data files modules import/symlink (p10k, lazyvim, aerospace)
 ```
 
-`nix/flake.nix` calls `mk/mkHost.nix` once per host in `hosts/`. `mkHost.nix` resolves
-identity, then builds a `nix-darwin.lib.darwinSystem` wiring in `modules/darwin`
-(system scope), `nix-homebrew`, and `home-manager.darwinModules.home-manager` — the
-latter pointing `home-manager.users.<username>` at `home/default.nix`.
+`nix/flake.nix` calls `mk/mkHost.nix` for each macOS host and `mk/mkHomeHost.nix` for
+each Linux host, one call per entry in `hosts/`. `mkHost.nix` resolves identity, then
+builds a `nix-darwin.lib.darwinSystem` wiring in `modules/darwin` (system scope),
+`nix-homebrew`, and `home-manager.darwinModules.home-manager` — the latter pointing
+`home-manager.users.<username>` at `home/default.nix`. `mkHomeHost.nix` skips all of
+that and builds a bare `home-manager.lib.homeManagerConfiguration` pointed at the same
+`home/default.nix` — no nix-darwin, no Homebrew, no `modules/darwin` involved at all.
 
-`home/default.nix` always imports `home/common/`, then picks `home/darwin` or
+`home/default.nix` sets `home.username`/`home.homeDirectory` from `identity.username`
+explicitly (required for standalone home-manager, which has no OS user record to
+infer them from; harmless on Darwin, where they already matched what nix-darwin
+auto-derived). It always imports `home/common/`, then picks `home/darwin` or
 `home/linux` by inspecting `host.system` (a plain string — **not**
 `pkgs.stdenv.isDarwin`; see Gotchas), then imports `home/profiles/<host.profile>.nix`.
 
 **Which host is "this machine"?** There's no detection — it's whichever flake
-attribute you build with, chosen once by the human running the command. `mkHost`
-takes that name as an explicit argument (`mkHost "personal-mac" (import
-./hosts/personal-mac.nix)` in `flake.nix`) and threads it onto `host.name`, which
-`home/default.nix` exports as `$DOTFILES_HOST` via `home.sessionVariables`. That's
-how `nix-switch` (`home/common/shell.nix`) knows which host to target without a
-hardcoded name in a file every host shares — it reads `$DOTFILES_HOST`, set by the
-*previous* successful switch. A machine that has never switched yet has no value
-to read, which is exactly why first setup on a new host uses the full explicit
-`darwin-rebuild switch --flake …#<name> …` command by hand (README) rather than
-`nix-switch`.
+attribute you build with, chosen once by the human running the command. Both
+`mkHost` and `mkHomeHost` take that name as an explicit argument (`mkHost
+"personal-mac" (import ./hosts/personal-mac.nix)` in `flake.nix`) and thread it onto
+`host.name`, which `home/default.nix` exports as `$DOTFILES_HOST` via
+`home.sessionVariables`. That's how `nix-switch` (`home/common/shell.nix`) knows
+which host to target without a hardcoded name in a file every host shares — it reads
+`$DOTFILES_HOST`, set by the *previous* successful switch, and dispatches to
+`darwin-rebuild` or `home-manager switch` based on `uname`. A machine that has never
+switched yet has no value to read, which is exactly why first setup on a new host
+uses the full explicit command by hand (README) rather than `nix-switch`.
 
 ### Where a new package goes
 
@@ -189,8 +205,8 @@ Python is special, twice over:
 configuration — it points Neovim at `~/.config/lazyvim`, symlinked by
 `home/common/editor.nix` from `nix/files/lazyvim/**`. LazyVim bootstraps `lazy.nvim`
 by cloning it at first launch and resolves its own plugins, so it is **not** pinned by
-nix. Plain `neovim` in `modules/darwin/system-defaults.nix` just supplies the
-unconfigured `nvim` binary LazyVim runs on top of.
+nix. Plain `neovim` in `home/common/packages.nix` just supplies the unconfigured
+`nvim` binary LazyVim runs on top of, on every platform.
 
 Adding a file under `nix/files/lazyvim/` is not enough — each path needs its own
 `home.file.".config/lazyvim/…".source` entry in `home/common/editor.nix`, or it never
@@ -247,3 +263,12 @@ Data consumed by modules, not modules themselves:
   paths) and explain every line item — don't accept an unexplained diff.
 - The zsh `initContent` installs Poetry over the network on first shell start if it is
   missing — Poetry is intentionally outside nix here.
+- **`linux-desktop` can't be fully built from a macOS machine.** `nix build
+  .#homeConfigurations.linux-desktop.activationPackage` from Darwin fetches
+  essentially everything from the binary cache successfully, but fails on a handful
+  of tiny glue scripts (session-vars, activation script, etc.) that home-manager
+  generates per-configuration rather than pulling from cache — those need an actual
+  `x86_64-linux` builder (real hardware, emulation, or a remote builder). A clean
+  `nix flake check` plus that mostly-successful fetch is the strongest verification
+  available without one; don't mistake the platform-mismatch errors at the end for a
+  real bug in the config.

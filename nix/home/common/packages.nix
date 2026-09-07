@@ -8,6 +8,7 @@
 		            # this explicitly
 		htop
 		miller
+		neovim  # unconfigured — LazyVim (editor.nix) runs on top of this
 		nodejs
 		ripgrep
 		silver-searcher

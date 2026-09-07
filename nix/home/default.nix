@@ -1,9 +1,14 @@
 # Entry point for the home-manager configuration. Shared across every host
 # and platform this repo supports — Darwin today, standalone home-manager
 # on Linux planned (see CLAUDE.md).
-{ lib, host, ... }:
+{ lib, host, identity, ... }:
 {
 	home.stateVersion = host.homeStateVersion;
+	home.username = identity.username;
+	home.homeDirectory =
+		if lib.hasSuffix "-darwin" host.system
+		then "/Users/${identity.username}"
+		else "/home/${identity.username}";
 	programs.home-manager.enable = true;
 
 	# Which flake output built this machine (e.g. "personal-mac") — how
