@@ -10,6 +10,7 @@
 		# anything else nix provides identically live in
 		# home/common/packages.nix instead.
 		brews = [
+			"herdr"  # herdrdev/herdr's own flake fails to build (crates.io 403)
 			"mas"
 			"nvtop"
 		];
