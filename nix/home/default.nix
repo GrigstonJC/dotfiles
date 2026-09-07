@@ -11,9 +11,11 @@
 		else "/home/${identity.username}";
 	programs.home-manager.enable = true;
 
-	# Which flake output built this machine (e.g. "personal-mac") — how
-	# nix-switch (home/common/shell.nix) knows what to switch without a
-	# hardcoded host name in a file every host shares.
+	# Which flake output built this machine (e.g. "personal-mac") — available
+	# for prompts and ad-hoc scripting. nix-switch (home/common/shell.nix)
+	# does NOT read this at runtime; it gets the host name baked directly
+	# into the generated ~/.zshrc instead, since a session variable can be
+	# pinned stale by a long-lived shell session (see CLAUDE.md Gotchas).
 	home.sessionVariables.DOTFILES_HOST = host.name;
 
 	# Platform comes from host.system (a plain string, known up front) rather
