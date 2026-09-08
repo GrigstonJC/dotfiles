@@ -26,6 +26,7 @@
 			"firefox"
 			"gimp"
 			"google-chrome"
+			"granola"
 			"iterm2"
 			"libreoffice"
 			"neo4j"
