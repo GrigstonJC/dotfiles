@@ -296,3 +296,11 @@ Data consumed by modules, not modules themselves:
   macOS tab is still reported as its own window, so the workspace still splits. The fix
   lives on the Ghostty side instead (`home/darwin/ghostty.nix` rebinds `cmd+t` to
   `new_split:auto`). Revisit if Ghostty ships non-native tabs (ghostty-org/ghostty#10711).
+- **`NSUserKeyEquivalents` (`modules/darwin/app-shortcuts.nix`) matches menu items by
+  exact title string.** An app renaming a menu item silently breaks the override with
+  no error — re-check the title from the app's own shipped resources (a `.pak`/`.nib`
+  file, not the running UI) rather than assuming it still matches.
+- **`system.defaults.CustomUserPreferences` is write-only.** nix-darwin only ever runs
+  `defaults write` for it; removing an entry from this repo does not restore whatever
+  the value was before. Reverting a `NSUserKeyEquivalents` override needs a manual
+  `defaults delete <bundle-id> NSUserKeyEquivalents`.
