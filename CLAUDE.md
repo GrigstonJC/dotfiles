@@ -260,6 +260,13 @@ Data consumed by modules, not modules themselves:
   don't rename it back to `lib/`.
 - **Never edit the generated dotfiles in `$HOME`.** `~/.p10k.zsh`, `~/.config/lazyvim/*`,
   and the zsh config are read-only `/nix/store` symlinks. Edit the source here, rebuild.
+- **A macOS update can silently replace nix-darwin's `/etc/zprofile` and `/etc/zshrc`**
+  with Apple's stock files (seen on the 27.0.1 update; `/etc/zshenv` and `/etc/bashrc`
+  survived as `/etc/static` symlinks). Stock `/etc/zprofile` runs `path_helper -s`, which
+  moves `/usr/bin:/bin` ahead of every nix dir, so BSD tools shadow nix's — first symptom
+  was `ll` failing with `ls: unrecognized option --group-directories-first`. Nothing in
+  the repo is wrong; `ls -la /etc/z*` showing regular files instead of symlinks is the
+  tell. Fix in README (Troubleshooting).
 - **String escaping in Nix `''…''` blocks.** `${…}` is Nix interpolation
   (e.g. `${pkgs.rsync}/bin/rsync`) and `''${…}` is a literal shell `${…}`. Getting this
   wrong usually shows up as a confusing evaluation error, not a runtime one.

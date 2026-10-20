@@ -90,3 +90,16 @@ hostname or owner. To add one:
 See `CLAUDE.md` for the package-placement rules (what goes in
 `home/common/`, `modules/darwin/`, or Homebrew) and the git workflow this
 repo follows.
+
+## Troubleshooting
+
+**GNU-only flags fail after a macOS update** (e.g. `ll` →
+`ls: unrecognized option --group-directories-first`). The update replaced
+nix-darwin's `/etc/zprofile`/`/etc/zshrc`, putting `/bin` ahead of nix on
+PATH. Move Apple's copies aside, re-switch, and open a new terminal:
+
+```sh
+sudo mv /etc/zprofile /etc/zprofile.before-nix-darwin.macos-update
+sudo mv /etc/zshrc   /etc/zshrc.before-nix-darwin.macos-update
+nix-switch
+```
