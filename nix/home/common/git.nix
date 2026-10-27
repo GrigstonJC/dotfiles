@@ -15,4 +15,9 @@
 			init.defaultBranch = "main";
 		};
 	};
+
+	# Also installs gh as git's credential helper for github.com and
+	# gist.github.com, replacing (not falling back to) the "store" helper
+	# above for those hosts — run `gh auth login` once per machine.
+	programs.gh.enable = true;
 }
