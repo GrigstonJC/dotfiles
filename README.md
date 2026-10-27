@@ -45,6 +45,8 @@ No usernames, emails, or hostnames are committed to this repo — see
    you on subsequent rebuilds (dispatching to `darwin-rebuild` or
    `home-manager switch` depending on the OS), targeting the host you just
    chose.
+6. Run `gh auth login`. git uses `gh` as its credential helper for
+   github.com, so HTTPS access to private GitHub repos fails until you do.
 
 ## Identity
 
