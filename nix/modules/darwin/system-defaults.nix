@@ -51,9 +51,7 @@
 		ghostty-bin  # plain ghostty is Linux-only in nixpkgs
 		google-cloud-sdk
 		mkalias
-		opencode
 		stow
-		tmate
 	];
 
 	### FONTS ###
