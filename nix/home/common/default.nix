@@ -7,6 +7,7 @@
 		./packages.nix
 		./python.nix
 		./shell.nix
+		./ssh.nix
 		./tmux.nix
 	];
 }
