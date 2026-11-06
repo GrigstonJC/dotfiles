@@ -12,7 +12,6 @@
 		neovim  # unconfigured — LazyVim (editor.nix) runs on top of this
 		nodejs
 		ripgrep
-		silver-searcher
 		tmux  # also provided by programs.tmux
 		uv
 		xclip

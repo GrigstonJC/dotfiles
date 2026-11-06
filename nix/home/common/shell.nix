@@ -113,7 +113,7 @@
 			python313 = "${pkgs.python313}/bin/python3";
 
 			# Nix update
-			nix-update = "nix flake update";
+			nix-update = "nix flake update --flake $HOME/.config/dotfiles/nix";
 
 			# Update Claude Code
 			claude-update = "npm install -g @anthropic-ai/claude-code";
