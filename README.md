@@ -70,6 +70,17 @@ needs to live in a committed profile.
 wired into the `nix-switch` function) points the build at that file instead of
 the placeholder. Nothing about this step touches git or gets committed.
 
+### GitHub SSH key
+
+ssh uses `~/.ssh/id_ed25519` for github.com unless the host's profile sets
+`my.githubSshKey` (e.g. `home/profiles/work.nix` points it at
+`~/.ssh/id_ed25519_gudea`). The key itself is never in the repo. Once per
+machine, store its passphrase in the macOS Keychain:
+
+```sh
+ssh-add --apple-use-keychain ~/.ssh/<your-key>
+```
+
 ## Adding a host
 
 Hosts are named by role (`personal-mac`, `work-mac`, `linux-desktop`), not

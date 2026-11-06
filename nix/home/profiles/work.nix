@@ -1,3 +1,5 @@
-# Work-profile home-manager config. Empty until something work-specific
-# belongs here. Exists so home/default.nix can select a profile by name.
-{ }
+# Work-profile home-manager config.
+{ ... }:
+{
+	my.githubSshKey = "~/.ssh/id_ed25519_gudea";
+}

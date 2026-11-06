@@ -14,4 +14,14 @@
 			home-manager config) to change that machine's default version.
 		'';
 	};
+
+	options.my.githubSshKey = lib.mkOption {
+		type = lib.types.str;
+		default = "~/.ssh/id_ed25519";
+		description = ''
+			Private key ssh uses for github.com. The key itself lives outside
+			the repo; override the path per host (in its home/profiles/*.nix)
+			when that machine's key has a different name.
+		'';
+	};
 }
