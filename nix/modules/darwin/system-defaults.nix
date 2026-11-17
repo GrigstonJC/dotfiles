@@ -35,6 +35,9 @@
 		trackpad.Dragging = true;
 		trackpad.TrackpadRightClick = true;
 		NSGlobalDomain."com.apple.swipescrolldirection" = false;
+		# Idle auto-logout gets stuck on apps' quit prompts (e.g. iTerm2) and
+		# leaves the lid-closed Mac awake, draining the battery.
+		CustomSystemPreferences."/Library/Preferences/.GlobalPreferences"."com.apple.autologout.AutoLogOutDelay" = 0;
 	};
 	system.keyboard = {
 		enableKeyMapping = true;
